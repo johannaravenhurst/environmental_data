@@ -1,0 +1,417 @@
+---
+title: "Lab 04: Uncertainty and Error"
+author: "Johanna Ravenhurst"
+date: "2022-10-10"
+output: html_notebook
+---
+
+```{r}
+require(here)
+```
+
+
+```{r}
+#Probability density = height of the curve at x, relative likelihood of x
+dnorm(-1.96)
+#Cumulative density = the area under the curve left of x, likelihood of x or smaller
+pnorm(-1.96)
+
+# Generate a vector of x-values
+x = seq(-3, 3, length.out = 1000)
+y = dnorm(x) #probability density of x = height of curve at x
+
+#plot a probability density function curve
+plot(x, y, main = "Normal PDF", type = "l")
+abline(h = 0) #plot horizontal line at y=0
+
+#What are the mean and standard deviation of the distribution that I used?
+#dnorm is for the Normal Distribution, so the defaults are mean = 0 sd=1
+#What arguments could I use to change those values?
+#use mean= and sd= to change the values
+
+# Generate a vector of x-values
+x = seq(-3, 3, length.out = 1000)
+y = dnorm(x, mean = 1, sd=2) #probability density of x = height of curve at x
+
+#plot a probability density function curve
+plot(x, y, main = "Normal PDF", type = "l")
+abline(h = 0.1) #plot horizontal line at y=0.1
+
+
+```
+
+Sampling from a Distribution
+
+#Random deviates functions
+
+```{r}
+require(palmerpenguins)
+hist(
+  penguins$body_mass_g,
+  main = "Histogram of Penguin Body Mass",
+  xlab = "Body Mass (g)")
+
+#to generate random numbers from a Normal Distribution, I need to know the number of observations to create, the mean, and the standard deviation
+mean(penguins$body_mass_g, na.rm = TRUE)
+sd(penguins$body_mass_g, na.rm = TRUE) 
+#na.rm removes the NA values before computation, otherwise answer is just NA
+nrow(penguins)
+
+n_pts        = 344
+penguin_mean = 4202
+penguin_sd   = 802
+
+dat_1 = rnorm(n = 344, mean = 4202, sd = 802)
+dat_2 = rnorm(n = 344, mean = 4202, sd = 802)
+dat_3 = rnorm(n = 344, mean = 4202, sd = 802)
+dat_4 = rnorm(n = 344, mean = 4202, sd = 802)
+
+#better code
+n_samples = 344
+pop_sd = 802
+pop_mean = 4202
+
+dat_1 = rnorm(n = n_samples, mean = pop_mean, sd = pop_sd)
+dat_2 = rnorm(n = n_samples, mean = pop_mean, sd = pop_sd)
+dat_3 = rnorm(n = n_samples, mean = pop_mean, sd = pop_sd)
+dat_4 = rnorm(n = n_samples, mean = pop_mean, sd = pop_sd)
+
+par(mfrow = c(2, 2))
+
+hist(dat_1)
+hist(dat_2)
+hist(dat_3)
+hist(dat_4)
+```
+#Random Uniform Numbers
+
+```{r}
+#runif() generates random, uniformly-distributed numbers
+dat_unif = runif(n = 27, min = 0, max = 4)
+hist(dat_unif)
+
+#if my sample size is larger it will look more uniform
+```
+
+#Randomness and Replication: set.seed()
+
+```{r}
+#use the same set.seed number to generate the same set of random numbers twice
+set.seed(1)
+dat_unif_1 = runif(n = 270, min = 0, max = 4)
+set.seed(1)
+dat_unif_2 = runif(n = 270, min = 0, max = 4)
+
+par(mfrow = c(1, 2))
+hist(dat_unif_1)
+hist(dat_unif_2)
+```
+#Measuring Error
+
+Residual = the difference between a predicted value and the observed value
+
+```{r}
+# Calculates the value of y for a linear function, given the coordinates
+# of a known point (x1, y1) and the slope of the line.
+line_point_slope = function(x, x1, y1, slope)
+{
+  get_y_intercept = 
+    function(x1, y1, slope) 
+      return(-(x1 * slope) + y1)
+  
+  linear = 
+    function(x, yint, slope) 
+      return(yint + x * slope)
+  
+  return(linear(x, get_y_intercept(x1, y1, slope), slope))
+}
+
+set.seed(123)
+n = 17
+slope = 0.7
+intcp = 0.2
+
+guess_x = 6
+guess_y = 4
+guess_slope = 0.72
+
+x = runif(n = n, min = 1, max = 10)
+y = rnorm(n = n, mean = slope * x + intcp)
+
+plot(x, y, pch = 16)
+curve(line_point_slope(x, guess_x, guess_y, guess_slope), add = T)
+
+#simulated data example
+
+n_pts = 10
+x_min = 1
+x_max = 10
+
+set.seed(123) #without this the points are different each time
+# X values are uniformly distributed
+x_random = runif(n = n_pts, min = x_min, max = x_max)
+
+# Y values are normally-distributed.
+# I used the default parameters for mean and sd.
+y_random = rnorm(n = n_pts)
+
+dat_random = data.frame(x = x_random, y = y_random)
+
+plot(y ~ x, data = dat_random, pch = 8)
+
+guess_x = 6
+guess_y = 0
+guess_slope = 0.1
+
+plot(y ~ x, data = dat_random, pch = 8)
+curve(line_point_slope(x, guess_x, guess_y, guess_slope), add = T)
+
+#calculate the predicted yvalues based on my estimated model parameters
+#add y_predicted variable as a new column in the dat_random dataset
+dat_random$y_predicted <- line_point_slope(dat_random$x, guess_x, guess_y, guess_slope)
+
+#calculate residuals and add to dat_random as a new column
+#residuals are the difference between the predicted and observed values
+dat_random$resids <- dat_random$y_predicted - dat_random$y
+
+sum(dat_random$resids)
+
+#sum of absolute values of the residuals?
+sum(abs(dat_random$resids))
+
+#Should a good model fit have a low or high sum of residuals?
+#I think a good model has a low sum of residuals, because there is a small difference between the predicted and observed values
+
+```
+#Start my Lab 4 Assignment Code
+
+#Question 1 - 5: Normal Vectors
+
+```{r}
+
+#Create four vectors of normally-distributed random numbers, norm_17, norm_30, norm_300, and norm_3000.
+
+#You should tell R that you want your random deviates have a mean of 10.4 and a standard deviation of 2.4.
+#norm_17 should have 17 elements, norm_30 should have 30 elements, norm_300 should have 300 elements, and norm_3000 should have 3000 elements.
+
+norm_mean <- 10.4
+norm_sd <- 2.4
+
+norm_17 <- rnorm(n = 17, mean = norm_mean, sd = norm_sd)
+norm_30 <- rnorm(n = 30, mean = norm_mean, sd = norm_sd)
+norm_300 <- rnorm(n = 300, mean = norm_mean, sd = norm_sd)
+norm_3000 <- rnorm(n = 3000, mean = norm_mean, sd = norm_sd)
+
+
+#Create a figure including histograms of your vectors norm_17, norm_30, norm_300, and norm_3000.
+#The histograms should all be on the same figure, arranged in panels (2 rows, 2 columns).
+#Each histogram must have an informative title that indicates how many randomly generated data points were used to build the histogram.
+
+#Save your figure to a file called lab_04_hist_01.png.
+#Your figure should be 1600 pixels high, and 1500 pixels wide.
+#It should have a resolution of 180 dpi.
+
+
+png(filename = here("lab_04_hist_01.png"), width = 1500, height = 1600, res=180)
+par(mfrow = c(2, 2))
+
+hist(norm_17, main = "Histogram of 17 Random Numbers", xlab = "Normally-Distributed Random Numbers")
+hist(norm_30, main = "Histogram of 30 Random Numbers", xlab = "Normally-Distributed Random Numbers")
+hist(norm_300, main = "Histogram of 300 Random Numbers", xlab = "Normally-Distributed Random Numbers")
+hist(norm_3000, main = "Histogram of 3000 Random Numbers", xlab = "Normally-Distributed Random Numbers")
+
+dev.off()
+
+```
+#Normal Density Function
+
+```{r}
+
+
+# Generate a vector of x-values
+x = seq(-2, 21, length.out = 1000)
+y = dnorm(x, mean = 10.4, sd = 2.4, log=FALSE)
+
+svg(filename = here("norm_1.svg"), 
+    width = 7, height = 7)
+plot(x, y, main = "Normal PDF with Mean of 10.4\nStandard Deviation of 2.4", type = "l", xlim = c(4, 18))
+abline(h = 0)
+
+
+```
+
+#Random Data
+
+```{r}
+
+#Experiment with different sets of randomly-generated data:
+
+#Try different numbers of points.
+dat_unif_Q9 = runif(n = 40, min = -3, max = 20)
+hist(dat_unif_Q9)
+dat_unif_Q9_2 = runif(n = 5, min = -3, max = 20)
+hist(dat_unif_Q9_2)
+dat_unif_Q9_3 = runif(n = 4000, min = -3, max = 20)
+hist(dat_unif_Q9_3)
+
+
+#Try different distributions in the x- and y- values.I used rnorm and runif. R has pre-made random number generating functions for lots of other distributions.
+dat_binom_Q9 <- rbinom(50, 5, 0.5)
+hist(dat_binom_Q9)
+dat_binom_Q9_2 <- rbinom(400, 5, 0.25)
+hist(dat_binom_Q9_2)
+dat_binom_Q9_3 <- rbinom(2000, 700, 0.25)
+hist(dat_binom_Q9_3)
+dat_binom_Q9_4 <- rbinom(2000, 700, 0.5)
+hist(dat_binom_Q9_4)
+
+#rpois(50, 5)
+#plot(rpois, )
+
+png(filename = here("lab_04_random.png"), width = 1500, height = 1600, res=180)
+par(mfrow = c(2, 2))
+
+n_pts = 5
+n_pts_2 = 5000
+x_min = 1
+x_max = 60
+
+set.seed(20)
+
+# X values are uniformly distributed
+x_random_q9 = rnorm(n = n_pts)
+
+# Y values are normally-distributed.
+# I used the default parameters for mean and sd.
+y_random_q9 = runif(n = n_pts, min = x_min, max = x_max)
+
+dat_random_q9 = data.frame(x = x_random_q9, y = y_random_q9)
+
+plot(y ~ x, data = dat_random_q9, pch = 5,
+     main = "Random Sample Normal and Uniform",
+     col =
+        adjustcolor(col = "green", alpha.f =.9),
+      xlab = "Random Normal Sample X",
+      ylab = "Random Uniform Sample Y")
+
+
+x_random_q9_3 = rnorm(n = n_pts_2)
+
+# Y values are normally-distributed.
+# I used the default parameters for mean and sd.
+y_random_q9_3 = runif(n = n_pts_2, min = x_min, max = x_max)
+
+dat_random_q9_3 = data.frame(x = x_random_q9_3, y = y_random_q9_3)
+
+plot(y ~ x, data = dat_random_q9_3, pch = 5,
+     main = "Random Sample Normal and Uniform",
+     col =
+        adjustcolor(col = "green", alpha.f =.9),
+      xlab = "Random Normal Sample X",
+      ylab = "Random Uniform Sample Y")
+
+
+
+n_pts = 100
+y_prob = 0.25
+y_size = 50
+
+set.seed(50)
+
+# X and Y values are normally-distributed.
+x_random_q9_2 = rnorm(n = n_pts)
+y_random_q9_2 = rbinom(n = n_pts, size = y_size, prob = y_prob)
+
+dat_random_q9_2 = data.frame(x = x_random_q9_2, y = y_random_q9_2)
+
+plot(y ~ x, data = dat_random_q9_2, pch = 5,
+     main = "Two Randomly Generated Samples",
+     col =
+        adjustcolor(col = "red", alpha.f =.9),
+      xlab = "Random Normal Sample X",
+      ylab = "Random Binomial Sample Y")
+
+hist(x_random_q9_2,
+     main = "Normally-Distributed Random Numbers: n=100\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Random Sample")
+
+dev.off()
+
+#Try using set.seed() with different seed values.
+#Plot your data! Try making histograms, boxplots, and scatterplots with different plotting parameters:
+
+#Try different plotting characters.
+#Try different colors and alpha (transparency) values.rgb() and adjustcolor() may be helpful.“steelblue” is a favorite of mine.
+
+#After you’ve experimented with different data sets and plots, choose four of your favorites to create a figure.
+
+#Arrange your four plots into a single figure: it should be a 2 by 2 grid of panels.
+
+#Save your figure to a file with an appropriate filename.
+
+```
+
+Fitting a Linear Model
+
+```{r}
+n_pts = 100
+y_prob = 0.25
+y_size = 50
+
+set.seed(50)
+
+# X and Y values are normally-distributed.
+x_random_q9_2 = rnorm(n = n_pts)
+y_random_q9_2 = rbinom(n = n_pts, size = y_size, prob = y_prob)
+
+dat_random_q9_2 = data.frame(x = x_random_q9_2, y = y_random_q9_2)
+
+png(filename = here("lab_04_randomlinear.png"), width = 1500, height = 1600, res=180)
+plot(y ~ x, data = dat_random_q9_2, pch = 5,
+     main = "Two Randomly Generated Samples",
+     col =
+        adjustcolor(col = "red", alpha.f =.9),
+      xlab = "Random Normal Sample X",
+      ylab = "Random Binomial Sample Y")
+
+guess_x = 0
+guess_y = 12
+guess_slope = 0.5
+
+curve(line_point_slope(x, guess_x, guess_y, guess_slope), add = T)
+dev.off()
+
+```
+Random Data Model Residuals
+
+```{r}
+#calculate the predicted yvalues based on my estimated model parameters
+#add y_predicted variable as a new column in the dat_random dataset
+dat_random_q9_2$y_predicted <- line_point_slope(dat_random_q9_2$x, guess_x, guess_y, guess_slope)
+
+#calculate residuals and add to dat_random as a new column
+#residuals are the difference between the predicted and observed values
+
+dat_random_q9_2$resids <- dat_random_q9_2$y_predicted - dat_random_q9_2$y
+
+png(filename = here("lab_04_random_residuals.png"), width = 1500, height = 600, res=180)
+par(mfrow = c(1, 2))
+hist(dat_random_q9_2$resids,
+     main = "Residuals for Random Data Model",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Residuals")
+
+plot(resids ~ y_predicted, data = dat_random_q9_2, pch = 5,
+     main = "Predicted Values and \nResiduals for Random Data",
+     col =
+        adjustcolor(col = "red", alpha.f =.9),
+      xlab = "Predicted Values",
+      ylab = "Residuals")
+dev.off()
+```
+

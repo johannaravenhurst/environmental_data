@@ -1,0 +1,703 @@
+---
+title: 'Lab 11: Simulation and Power Analysis'
+author: "Johanna Ravenhurst"
+date: "2022-12-09"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+---
+I didn't work with other students. 
+
+```{r}
+#Setup
+rm(list = ls())
+require(here)
+require(rgl)
+birds   = read.csv(here("data", "bird.sub.csv"))
+hab     = read.csv(here("data", "hab.sub.csv"))
+birdhab = merge(
+  birds,
+  hab, by=c("basin", "sub"))
+
+head(birdhab)
+```
+# Walkthrough code not included in output
+#Scatterplot
+```{r include = FALSE }
+plot(
+  BRCR ~ ls,
+  data = birdhab,
+  main = "Brown Creeper Abundance and Late-Successional Forest",
+  xlab = "late-successional forest extent",
+  ylab = "Brown Creeper abundance"
+)
+
+#The relationship looks fairly linear, with increasing brown creeper abundance as the extent of late-successional forest increases. However, there is a potential challenge for a Group 1 model because there is a bit of a megaphone shape, so these data might not meet the assumption of constant variance.
+
+```
+
+
+#Simple linear regression
+
+```{r include = FALSE }
+#Fit simple linear regression
+fit_1 = lm(BRCR ~ ls, data = birdhab)
+#plot the regression line over the scatterplot
+plot(
+  BRCR ~ ls,
+  data = birdhab,
+  main = "Brown Creeper Abundance and Late-Successional Forest",
+  xlab = "late-successional forest extent",
+  ylab = "Brown Creeper abundance",
+  col= "black", pch = 16
+)
+abline(fit_1, lwd=2)
+summary(fit_1)
+```
+
+This model suggests a significant relationship between late-successional forest and Brown Creeper abundance, but this could be a product of chance. There is an issue with using linear regression due to the potential heterogeneous variance in these data.
+
+#Deterministic Model: Linear Function
+
+```{r include = FALSE }
+linear = function(x, y_int, slope)
+{
+  output_lin = y_int + slope*(x)
+  
+  return (output_lin)
+}
+
+#test function - output matches walk-through
+linear(x = 1, y_int = 1, slope = 1)
+linear(x = 3:5, y_int = 1, slope = 1)
+linear(x = 3:5, y_int = -1, slope = 1)
+linear(x = 3:5, y_int = -1, slope = 0.01)
+```
+#Stochastic Model: Normal Distribution
+
+```{r include = FALSE }
+stochastic_test = rnorm(1000, mean = 0, sd = 1)
+```
+
+#Simulation Function
+
+```{r include = FALSE}
+#Incorrect linear_simulator functions:
+linear_simulator_wrong = function(x, y_int, slope, st_dev)
+{
+  determ = y_int + slope*(x)
+  stochastic = rnorm(n, mean = 0, sd = st_dev)
+  output_sim = determ + stochastic
+  return (output_sim)
+}
+
+#the first option isn't working..trying to simplify as linear_simulator2...this is still causing errors and seems to be returning an even longer vector below
+
+linear_simulator_wrong2 = function(x, y_int, slope, st_dev)
+{
+  output_sim = y_int + slope*(x) + rnorm(n, mean = 0, sd = st_dev)
+  return (output_sim)
+}
+
+#Notes about issues when builing this function: I tried setting mean = 0 and then added the normally distributed error to the end of the linear equation. While the first set of test plots looked ok, when I tried to simulate data using this function I was getting errors due to x and y being different lengths
+```
+
+
+```{r }
+
+
+linear_simulator = function(x, y_int, slope, st_dev)
+{
+  y_det = y_int + slope * x
+  output_sim = rnorm(n = length(x), mean = y_det, sd = st_dev)
+  return (output_sim)
+}
+
+
+
+#test
+n = 200
+
+par(mfrow = c(2, 2), mar = c(1, 1, 1, 1))
+for (i in 1:4)
+{
+  x = runif(n = n)
+  plot(
+    x,
+    linear_simulator(x, y_int = 1, slope = 4.5, st_dev = 0.1),
+    main = "", xlab = "x", ylab = "y",
+    pch = 16, col = rgb(0, 0.2, 0, 0.2),
+    axes = FALSE)
+  box()
+}
+
+#test2
+n = 400
+
+par(mfrow = c(2, 2), mar = c(1, 1, 1, 1))
+for (i in 1:4)
+{
+  x = runif(n = n)
+  plot(
+    x, linear_simulator(x, y_int = 10, slope = -6.5, st_dev = 1.1),
+    main = "", xlab = "x", ylab = "y",
+    pch = 16, col = rgb(0, 0.2, 0, 0.2),
+    axes = FALSE)
+  box()
+}
+```
+#Build the simulation
+
+
+```{r}
+#Retrieve the model coefficients
+fit_1_coefs = coefficients(fit_1)
+str(fit_1_coefs)
+
+#Retrieve the standard deviation parameter
+
+fit_1_summary = summary(fit_1)
+str(fit_1_summary)
+fit_1_summary$sigma
+
+#Store the intercept, slope, and standard deviation parameters from the model into the following variables:
+int_obs <- fit_1_coefs["(Intercept)"]
+slope_obs <- fit_1_coefs["ls"]
+sd_obs <- fit_1_summary$sigma
+
+```
+#Simulate data
+
+NOTE: I kept getting errors here because x and y are different lengths "Error in xy.coords(x, y) : 'x' and 'y' lengths differ". Finally I was able to get the linear simulator function to work properly after reviewing some material on Google and thinking about it some more. 
+
+```{r}
+
+plot(
+  x = birdhab$ls, 
+  y = linear_simulator(
+    x = birdhab$ls,
+    y_int = int_obs,
+    slope = slope_obs,
+    st_dev = sd_obs
+  ),
+  main = "Simulated Data",
+  xlab = "late-successional forest",
+  ylab = "Brown Creeper Abundance")
+
+#same length now!!
+length(birdhab$ls)
+length(linear_simulator(
+    birdhab$ls,
+    int_obs,
+    slope_obs,
+    sd_obs
+  ))
+
+#alternative test
+plot(
+  birdhab$ls, birdhab$BRCR, 
+  xlab = "late-successional forest extent",
+  ylab = "Brown Creeper abundance",
+  pch = 19)
+
+points(
+  x = birdhab$ls, 
+  y = linear_simulator(
+    x = birdhab$ls,
+    y_int = int_obs,
+    slope = slope_obs,
+    st_dev = sd_obs
+  ),
+  col = adjustcolor("red", alpha = 0.3),
+  pch = 16)
+
+legend(
+  "topleft",
+  legend = c("data", "simulation"),
+  pch = 16,
+  col = c(1, adjustcolor("red", alpha = 0.3)))
+```
+I ran the model a few more times to see how variable the results are.
+
+Is the new pattern of points the same as the original pattern? Are there any notable discrepancies? - the pattern looks similar, but sometimes there is more of a linear pattern without the concerning megaphone shape that I noted in the original data.
+
+Does the pattern of the simulated points vary much among realizations? - it's roughly similar, the pattern looks linear with more/less variance. 
+
+After running the model a few times, do you notice any potential problems with the model? - no, I think this looks fine
+
+Walkthrough says there are sometimes negative values, so I will need to alter the function to make sure it doesn't return negative values for brown creeper abundance (y). Hint is to use a logical test. 
+
+#Single simulation - find out if we can reject the null with a single experiment
+
+```{r include = FALSE }
+y_sim = linear_simulator(
+  x = birdhab$ls,
+  y_int = int_obs,
+  slope = slope_obs,
+  st_dev = sd_obs
+)
+
+fit_sim = lm(y_sim ~ birdhab$ls)
+summary(fit_sim)
+
+sum_1 = summary(fit_sim)
+sum_1$coefficients
+
+#p-value is less than 0.05, so we have significant evidence to reject the null
+```
+#Repeated Simulations to estimate the power
+
+```{r include = FALSE }
+n_sims = 1000
+p_vals = numeric(n_sims)
+alpha = 0.05
+for(i in 1:n_sims)
+{
+  y_sim = linear_simulator(
+    x = birdhab$ls,
+    y_int = int_obs,
+    slope = slope_obs,
+    st_dev = sd_obs
+  )
+  fit_sim = lm(y_sim ~ birdhab$ls)
+  
+  p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+}
+sum(p_vals < alpha) / n_sims
+```
+
+Based on the simulation output:
+
+    How many simulations found a significant slope coefficient? - all 1000 simulations
+    What is our statistical power? - 1
+
+```{r}
+#function for simulation loops
+linear_sim_fit = function(x, slope, y_int, st_dev)
+{
+  y_sim = linear_simulator(
+    x = x,
+    y_int = y_int,
+    slope = slope,
+    st_dev = st_dev
+  )
+  fit_sim = lm(y_sim ~ x)
+  return(fit_sim)
+}
+```
+
+
+# Simulating Effect Sizes
+
+```{r include = FALSE }
+#This example simulation estimates statistical power as a function of the slope (the effect size).
+
+alpha = 0.05
+n_sims = 1000
+p_vals = numeric(n_sims)
+
+n_effect_sizes = 20
+effect_sizes_1 = seq(-.01, .01, length.out = n_effect_sizes)
+
+effect_size_powers = numeric(n_effect_sizes)
+
+for(j in 1:n_effect_sizes)
+{
+  for(i in 1:n_sims)
+  {
+    fit_sim = linear_sim_fit(
+      x = birdhab$ls,
+      y_int = int_obs,
+      slope = effect_sizes_1[j],
+      st_dev = sd_obs
+    )
+    
+    p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+  }
+  effect_size_powers[j] = sum(p_vals < alpha) / n_sims
+}
+
+sim_effect_size = 
+  data.frame(
+    effect_size = effect_sizes_1,
+    power       = effect_size_powers)
+
+plot(
+  power ~ effect_size, data = sim_effect_size,
+  type = 'l', xlab = 'Effect size', ylab = 'Power')
+abline(v = slope_obs, lty = 2, col = 'red')
+
+#The plot has the slope of our original dataset as a red line. This indicates that we have power of 1.0 to detect our observed effect size of 0.0058. This lines up with our result from the repeated simulations above. 
+```
+#Simulating Sample Sizes
+
+```{r include = FALSE }
+alpha = 0.05
+n_sims = 1000
+p_vals = numeric(n_sims)
+
+sample_sizes = seq(5, 100)
+sample_size_powers = numeric(length(sample_sizes))
+
+# The maximum x value in the simulation.
+# Use the maximum observed x-value in the data
+max_x = max(birdhab$ls)
+
+for(j in 1:length(sample_sizes))
+{
+  # A sequence of equally-spaced x-values:
+  x_vals = seq(0, max_x, length.out = sample_sizes[j])
+  
+  for(i in 1:n_sims)
+  {
+    fit_sim = linear_sim_fit(
+      x = x_vals,
+      y_int = int_obs,
+      slope = slope_obs,
+      st_dev = sd_obs
+    )
+    p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+  }
+  sample_size_powers[j] = sum(p_vals < alpha) / n_sims
+}
+
+
+sim_sample_size = 
+  data.frame(
+    sample_size = sample_sizes,
+    power       = sample_size_powers)
+
+
+plot(
+  power ~ sample_size, data = sim_sample_size,
+  type = 'l', xlab = 'Sample size', ylab = 'Power')
+abline(v = nrow(birdhab), lty = 2, col = 'red')
+```
+#How much power is lost if we reduce the sample size from 30 to 20? - none
+
+#Effect Size and Sample Size - vary 2 parameters instead of just 1
+
+```{r include = FALSE }
+alpha = 0.01
+n_sims = 50
+
+p_vals = numeric(n_sims)
+
+n_effect_sizes = 20
+effect_sizes = seq(-.01, .01, length.out = n_effect_sizes)
+
+# The maximum x value in the simulation.
+# Use the maximum observed x-value in the data
+max_x = max(birdhab$ls)
+
+sample_sizes = seq(10, 50)
+
+sim_output_2 = matrix(nrow = length(effect_sizes), ncol = length(sample_sizes))
+
+for(k in 1:length(effect_sizes))
+{
+  effect_size = effect_sizes[k]
+  for(j in 1:length(sample_sizes))
+  {
+    x_vals = seq(0, max_x, length.out = sample_sizes[j])
+    
+    for(i in 1:n_sims)
+    {
+      fit_sim = linear_sim_fit(
+        x = x_vals,
+        y_int = int_obs,
+        slope = effect_size,
+        st_dev = sd_obs
+      )
+      p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+    }
+    sim_output_2[k, j] = sum(p_vals < alpha) / n_sims
+  }
+  print(paste0("computing effect size ", k," of ", length(effect_sizes)))
+}
+
+sim_n_effect_size = 
+  list(
+    power = sim_output_2,
+    effect_size = effect_sizes,
+    sample_size = sample_sizes
+  )
+
+#Our output power data are now stored in a matrix (instead of a vector), so we need a way to visualize 2-dimensional gridded data, i.e. raster data.
+```
+#Plotting a matrix using image()
+
+```{r include = FALSE }
+image(
+  sim_n_effect_size$power,
+  xlab = "Effect size",
+  ylab = "Sample Size",
+  axes = FALSE)
+
+# add x-axis labels
+axis(
+  1, 
+  at = c(0, 0.5, 1), 
+  labels = c(-.01, 0.0, .01))
+
+# add y=axis labels
+axis(
+  2, 
+  at = c(0, 1), 
+  labels = c(sample_sizes[1], tail(sample_sizes, 1)))
+```
+#Contour plotting
+
+```{r include = FALSE }
+contour(
+  x = sim_n_effect_size$effect_size,
+  y = sim_n_effect_size$sample_size,
+  z = sim_n_effect_size$power,
+  xlab = "effect size",
+  ylab = "sample size",
+  main = "Contour Plot of Statistical Power",
+  levels = seq(0, 1, length.out = 9),
+  drawlabels = TRUE,
+  # method = "simple")
+  method = "edge")
+```
+#Static perpective plot
+
+```{r include = FALSE }
+persp(
+  x = sim_n_effect_size$effect_size,
+  y = sim_n_effect_size$sample_size,
+  z = sim_n_effect_size$power,
+  xlab = "beta", ylab = "n", zlab = "power",
+  col = 'lightblue',
+  theta = 30, phi = 30, expand = .75,
+  ticktype = 'detailed')
+```
+```{r include = FALSE }
+#install.packages("rgl")
+require(rgl)
+```
+```{r include = FALSE }
+persp3d(
+  x = sim_n_effect_size$effect_size,
+  y = sim_n_effect_size$sample_size,
+  z = sim_n_effect_size$power,
+  xlab = "beta", ylab = "n", zlab = "power",
+  col = 'lightblue',
+  theta = 30, phi = 30, expand = .75,
+  ticktype = 'detailed')
+
+#What does the power surface reveal about the relationship between slope and sample size?
+
+#If you wanted say a power of > 0.8 to detect a slope of b = .002, how large would your sample size need to be? 20-30? It's hard to tell from this plot
+```
+
+
+
+```{r include = FALSE }
+#save interactive plot to html file
+
+
+```
+
+```{r include = FALSE}
+#save R data object 
+save(
+  sim_n_effect_size,
+  file = here::here("data", "lab_11_n_effect_sizes.Rdata"))
+
+#I can load the data again using:
+load(file = here::here("data", "lab_11_n_effect_sizes.Rdata"))
+```
+
+# **Lab Questions**
+
+# **Q1-2: Dispersion and Statistical Power**
+
+observed standard deviation was 0.14 - so try range of pop sd 0.01 - 0.42
+
+```{r}
+alpha = 0.05
+n_sims = 100
+p_vals = numeric(n_sims)
+
+# What was the observed standard deviation?
+sd_obs
+
+# specify the number of different standard deviation values to simulate:
+n_sds = 200
+pop_sds = seq(0.01, 0.42, length.out = n_sds)
+
+pop_sd_powers = numeric(n_sds)
+
+for(j in 1:length(pop_sds))
+{
+  pop_sds_j = pop_sds[j]
+  for(i in 1:n_sims)
+  {
+    fit_sim = linear_sim_fit(
+      x = birdhab$ls,
+      y_int = int_obs,
+      slope = slope_obs,
+      st_dev = pop_sds_j
+      )
+    p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+  }
+  pop_sd_powers[j] = sum(p_vals < alpha) / n_sims
+}
+
+sim_output_dispersion = data.frame(
+  sd = pop_sds,
+  power = pop_sd_powers )
+
+# You should save your simulation results so you don't have to run it every time.
+save(
+  sim_output_dispersion, 
+  file = here::here("data", "lab_ll_dat_dispersion_sim.RData"))
+
+
+#Q1 (2 pts.): Include a figure of your line plot in your report.
+# Line plot of standard deviation (x-axis) and statistical power (y-axis)
+plot(
+  power ~ sd, data = sim_output_dispersion,
+  type = 'l', xlab = 'Standard Deviation', ylab = 'Power')
+
+
+# Add a dotted vertical red line at the observed population standard deviation value.
+abline(v = sd_obs, lty = 2, col = 'red')
+```
+**Q2 (2 pts.): Why do you think that statistical power decreases as population dispersion increases?**
+
+As population dispersion increases, the variability in the sample increases and therefore it is harder to get an accurate estimate of the parameters with the same sample size and we are less likely to reject the null hypothesis when it is false (true positives). Therefore we end up with a higher probability of false negatives, or failing to reject the null hypothesis when in fact it is false, which corresponds to a lower power. I think if we increased the sample size, we could still maintain high power for the study even with larger population dispersion. 
+
+# **Q3-4: Dispersion, Sample Size, and Statistical Power**
+
+**Code for power simulation with both population dispersion and sample size**
+
+```{r}
+alpha = 0.05
+
+# Start with a small number
+n_sims = 1000
+p_vals = numeric(n_sims) 
+
+# What was the observed standard deviation?
+sd_obs
+
+# specify the number of different standard deviation values to simulate:
+# Start with a small number
+n_sds = 20
+pop_sds = seq(0.05, 0.42, length.out = n_sds)
+
+# The maximum x value in the simulation.
+# Use the maximum observed x-value in the data
+max_x = max(birdhab$ls)
+
+
+pop_sd_powers = numeric(n_sds)
+
+sample_sizes = seq(5, 100)
+
+sim_output_3 = matrix(nrow = length(pop_sds), ncol = length(sample_sizes))
+
+for(k in 1:length(pop_sds))
+{
+  pop_sd_k = pop_sds[k]
+  
+  for(j in 1:length(sample_sizes))
+  {
+    x_vals = seq(0, max_x, length.out = sample_sizes[j])
+    
+    for(i in 1:n_sims)
+    {
+      fit_sim = linear_sim_fit(
+      x = x_vals,
+      y_int = int_obs,
+      slope = slope_obs,
+      st_dev = pop_sd_k
+      )
+    p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+    }
+    
+    sim_output_3[k, j] = sum(p_vals < alpha) / n_sims
+  }
+  print(paste0("Testing standard deviation ", k, " of ", n_sds))
+}
+
+image(sim_output_3)
+
+sim_3_dat = 
+  list(
+    power       = sim_output_3,
+    sample_size = sample_sizes,
+    pop_sd      = pop_sds)
+
+
+# You should save your simulation results so you don't have to run it every time.
+save(
+  sim_3_dat, 
+  file = here::here("data", "lab_ll_sim_output_dispersion_n_1000.RData"))
+
+```
+
+**Q3 (2 pts.): Include a figure of your contour plot in your report.**
+
+```{r}
+#Create a contour plot of the sample size and population dispersion power simulation.
+
+contour(
+  x = sim_3_dat$pop_sd,
+  y = sim_3_dat$sample_size,
+  z = sim_3_dat$power,
+  xlab = "population dispersion (standard deviation)",
+  ylab = "sample size",
+  main = "Contour Plot of Statistical Power",
+  levels = seq(0, 1, length.out = 9),
+  drawlabels = TRUE,
+  # method = "simple")
+  method = "edge")
+
+```
+
+**Q4 (2 pts.): Qualitatively describe the patterns you see in the contour plot. Make sure you discuss the effects of sample size and population dispersion on statistical power.**
+
+When the population dispersion is very low, all that is needed is a small sample size (around 10) in order to obtain a power of 1. However, as the population dispersion increases, we can see from the contours that a much higher sample size is needed to obtain statistical power of 1. This is obvious from the fact that the curve for a statistical power of 1 has a much steeper slope as the population dispersion increases, compared to the curves for lower power values. If we knew the population dispersion was likely to be around 0.4, we might aim for a statistical power around 0.875 using a sample size of 60. If we aimed for a power of 1 in this scenario, we would need to invest much more time and resources in a larger sample size to obtain the desired statistical power. 
+
+
+# **Q5-6: Dispersion and Statistical Power**
+
+```{r}
+persp3d(
+   x = sim_3_dat$pop_sd,
+  y = sim_3_dat$sample_size,
+  z = sim_3_dat$power,
+  xlab = "population dispersion (standard deviation)",
+  ylab = "sample size", zlab = "power",
+  col = 'yellow',
+  theta = 30, phi = 30, expand = .75,
+  ticktype = 'detailed')
+```
+
+```{r}
+#save interactive plot to html file
+
+require(htmlwidgets)
+saveWidget(
+  rglwidget(),
+  file = here(
+    "sim_3_dat_power_sim_plot.html"),
+  selfcontained = TRUE
+)
+```
+
+
+
+**Q5 (5 pts.): Upload your plot as an interactive html html file. NOTE: some Mac users are not able to use RGL. You may also upload a static plot created with persp() if you can’t get RGL to work on your computer.**
+
+
+**Q6 (2 pts.): Describe how you could use the information shown in your plot when designing an experiment.**
+
+The plot could help you decide on a reasonable sample size to aim for when designing an experiment. If you know what the population dispersion is likely to be for your sample, you could use the plot to decide how big of a sample size to use in order to obtain adequate power. You might decide to sacrifice a bit of statistical power in order to save money and aim for a smaller sample size. On the other hand, you might decide it is worthwhile to aim for the highest statistical power possible given your expected population dispersion, and this plot could show which sample size would likely achieve that goal. 
+

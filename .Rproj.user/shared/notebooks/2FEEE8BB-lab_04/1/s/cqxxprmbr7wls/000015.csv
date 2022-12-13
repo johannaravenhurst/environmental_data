@@ -1,0 +1,6 @@
+"0",""
+"0","guess_x = 6"
+"0","guess_y = 0"
+"0","guess_slope = 0.1"
+"0",""
+"0","plot(y ~ x, data = dat_random, pch = 8)"

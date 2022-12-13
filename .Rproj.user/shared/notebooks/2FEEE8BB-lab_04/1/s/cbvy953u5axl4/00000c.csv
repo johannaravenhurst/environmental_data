@@ -1,0 +1,8 @@
+"0",""
+"0","svg(filename = if(onefile) ""norm_1.svg"" else ""norm%1.svg"","
+"0","    width = 7, height = 7, pointsize = 12,"
+"0","    onefile = FALSE, family = ""sans"", bg = ""white"","
+"0","    antialias = c(""default"", ""none"", ""gray"", ""subpixel""),"
+"0","    symbolfamily)"
+"2","Error in is.factor(x) : object 'onefile' not found
+"

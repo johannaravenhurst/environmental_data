@@ -1,0 +1,670 @@
+---
+title: 'Lab 08: Modeling Data 1'
+author: "Johanna Ravenhurst"
+date: "2022-11-09 - 2022-11-12"
+output: html_document
+---
+
+```{r}
+require(here)
+require(palmerpenguins)
+#install.packages('simpleboot')
+require(simpleboot)
+require(boot)
+
+#Remove Gentoo penguins using droplevels
+
+penguin_dat = droplevels(subset(penguins, species != "Gentoo"))
+{
+  boxplot(
+    flipper_length_mm ~ species, data = penguin_dat,
+    ylab = "Flipper length (mm)")
+}
+
+veg = read.csv(here("data", "vegdata.csv"))
+head(veg)
+
+dat_bird = read.csv(here("data", "bird.sub.csv"))
+dat_habitat = read.csv(here("data", "hab.sub.csv"))
+
+#Merge in to dat_all
+dat_all = merge(
+  dat_bird, 
+  dat_habitat,
+  by = c("basin", "sub"))
+```
+#Note: Walkthrough examples not included in html output
+
+#Parametric Two-Sample Test
+
+```{r include = FALSE}
+#Perform a t-test of the alternative hypothesis that Adelie penguins have shorter flippers than Chinstrap penguins. Is this a one- or two-tailed test? - one-tailed because we are only interested in shorter flippers, not both longer and shorter
+
+t.test(flipper_length_mm ~ species, data = penguin_dat, alternative = "less")
+
+#Results:
+#95% CI: -inf, -4.1895
+#P-value: <0.0001
+#Group means: Adelie 189.95, Chinstrap 195.82
+```
+#Bootstrap Two-Sample Test
+
+```{r include = FALSE}
+
+summary(penguin_dat$flipper_length_mm)
+#1 NA value
+
+
+
+boot_mean = function(x, i)
+{
+  return(mean(x[i], na.rm = TRUE))
+}
+#As explained in the Lab 07 walkthrough, we have to use our boot_mean() function, rather than mean() within our call to two.boot(). We need to do this to account for the na value (we know there is 1 for this variable).
+
+sample1_dat <- droplevels(subset(penguin_dat, species != "Chinstrap")) 
+sample2_dat <- droplevels(subset(penguin_dat, species != "Adelie")) 
+#Note: I'm guessing there is an easier way to subset the data for each species for the two.boot function, but this is what I could come up with...
+
+ boxplot(
+    flipper_length_mm ~ species, data = sample1_dat,
+    ylab = "Flipper length (mm)")
+ boxplot(
+    flipper_length_mm ~ species, data = sample2_dat,
+    ylab = "Flipper length (mm)")
+
+pen_boot = two.boot(sample1_dat$flipper_length_mm, sample2_dat$flipper_length_mm, boot_mean, R=1000)
+
+
+str(pen_boot)
+
+#Bootstrapped differences are stored in component called t
+pen_boot$t
+
+hist(pen_boot$t,
+     main = "Histogram of 1000 bootstrap differences\nin mean penguin flipper length",
+     xlab = "Difference in mean flipper lenth (mm)\nAdelie and Chinstrap Penguins")
+```
+
+#Tree Data
+
+```{r include = FALSE}
+boxplot(pine ~ treatment, dat = veg)
+
+#What do you notice about the data?
+#There are more pine seedlings in the clipped treatment and there is a large range of numbers of pine for that treatment. The other three groups have a narrow range of numbers of pine seedlings and much fewer seedlings in general.
+
+#Use subset to create a new data frame with only clipped or control treatments
+dat_tree = droplevels(subset(veg, treatment %in% c("control", "clipped")))
+
+boxplot(pine ~ treatment, dat = dat_tree)
+
+#use table to determine how many observations in each of the treatments
+
+table(dat_tree$treatment)
+#8 observations in each treatment
+summary(dat_tree$treatment)
+str(dat_tree$treatment)
+
+```
+#Nonparametric two-sample test - wilcox
+
+```{r include = FALSE}
+#Conduct a Wilcoxon ranked sum test on the difference in means between the treatments.
+
+wilcox.test(pine ~ treatment, data = dat_tree, alternative = "greater")
+
+#p-value = 0.05
+```
+#Boostrap of tree data
+
+```{r include = FALSE}
+
+sample1_tree <- droplevels(subset(dat_tree, treatment != "control")) 
+sample2_tree <- droplevels(subset(dat_tree, treatment != "clipped")) 
+#Note: I'm guessing there is an easier way to subset the data for each species for the two.boot function, but this is what I could come up with...
+
+ boxplot(
+    pine ~ treatment, data = sample1_tree,
+    ylab = "Pine")
+ boxplot(
+    pine ~ treatment, data = sample2_tree,
+    ylab = "Pine")
+
+tree_boot = two.boot(sample1_tree$pine, sample2_tree$pine, boot_mean, R=10000)
+
+
+str(tree_boot)
+
+boot.ci(tree_boot)
+quantile(tree_boot$t, c(0.025, 0.975))
+
+hist(tree_boot$t)
+```
+#Bird Data: linear model
+
+```{r include = FALSE}
+
+dat_bird = read.csv(here("data", "bird.sub.csv"))
+dat_habitat = read.csv(here("data", "hab.sub.csv"))
+
+# I already read my data into dat_bird and dat_habitat:
+dat_all = merge(
+  dat_bird, 
+  dat_habitat,
+  by = c("basin", "sub"))
+
+head(dat_all[, c("b.sidi", "s.sidi")])
+```
+#Z-standardization
+
+```{r include = FALSE}
+# Calculate the sample mean and sd:
+b_sidi_mean = mean(dat_all$b.sidi, na.rm = TRUE)
+b_sidi_sd   = sd(dat_all$b.sidi, na.rm = TRUE)
+
+# Use the subset-by-name symbol ($) to create a 
+# new column of z-standardized values.
+
+dat_all$b.sidi.standardized = (dat_all$b.sidi - b_sidi_mean)/b_sidi_sd
+
+mean(dat_all$b.sidi.standardized)
+#note that this value is effectively 0
+sd(dat_all$b.sidi.standardized)
+
+#repeat for s.sidi column
+# Calculate the sample mean and sd:
+s_sidi_mean = mean(dat_all$s.sidi, na.rm = TRUE)
+s_sidi_sd   = sd(dat_all$s.sidi, na.rm = TRUE)
+
+# Use the subset-by-name symbol ($) to create a 
+# new column of z-standardized values.
+
+dat_all$s.sidi.standardized = (dat_all$s.sidi - s_sidi_mean)/s_sidi_sd
+
+mean(dat_all$s.sidi.standardized)
+#note that this value is effectively 0
+sd(dat_all$s.sidi.standardized)
+```
+#Model Variables
+
+```{r include = FALSE}
+plot(
+  b.sidi ~ s.sidi, data = dat_all,
+  main = "Simpson's diversity indices",
+  xlab = "Vegetation cover diversity",
+  ylab = "Bird diversity")
+```
+#Simple Linear Regression
+
+```{r include = FALSE}
+fit_1 = lm(b.sidi ~ s.sidi, data = dat_all)
+coef(fit_1)
+
+slope_observed = coef(fit_1)[2]
+
+plot(
+  b.sidi ~ s.sidi, data = dat_all,
+  main = "Simpson's diversity indices",
+  xlab = "Vegetation cover diversity",
+  ylab = "Bird diversity")
+abline(fit_1)
+
+#We'll use the select argument to extract just the two variables we need from the data. then we will use a Monte Carlo randomization procedure to construct our own null hypothesis test because we don't want to use the lm() function and assume the errors are normally distributed around the mean. 
+
+dat_1 = 
+  subset(
+    dat_all,
+    select = c(b.sidi, s.sidi))
+```
+
+#Resampling our data: Our goal is to use resampling techniques, Monte Carlo and bootstrapping, to characterize the null and alternative distributions.
+
+#Null Distribution: Monte Carlo Simulation
+
+```{r include = FALSE}
+set.seed(123)
+index_1 = sample(nrow(dat_1), replace = TRUE)
+index_2 = sample(nrow(dat_1), replace = TRUE)
+
+dat_resampled_i = 
+  data.frame(
+    b.sidi = dat_1$b.sidi[index_1],
+    s.sidi = dat_1$s.sidi[index_2]
+  )
+
+fit_resampled_i = lm(b.sidi ~ s.sidi, data = dat_resampled_i)
+slope_resampled_i = coef(fit_resampled_i)[2]
+
+print(slope_resampled_i)
+
+plot(
+  b.sidi ~ s.sidi, data = dat_resampled_i,
+  main = "Simpson's diversity indices (MC resampled data)",
+  xlab = "Vegetation cover diversity",
+  ylab = "Bird diversity")
+abline(fit_resampled_i)
+```
+#Monte Carlo Randomization Loop
+
+```{r include = FALSE}
+#Use numeric to create a vector to hold the results
+m = 10000 
+result_mc = numeric(m)
+
+for(i in 1:m)
+{
+  index_1 = sample(nrow(dat_1), replace = TRUE)
+  index_2 = sample(nrow(dat_1), replace = TRUE)
+  
+  dat_resampled_i = 
+  data.frame(
+    b.sidi = dat_1$b.sidi[index_1],
+    s.sidi = dat_1$s.sidi[index_2]
+  )
+
+fit_resampled_i = lm(b.sidi ~ s.sidi, data = dat_resampled_i)
+  
+  result_mc[i] = coef(fit_resampled_i)[2]
+} 
+
+hist(
+  result_mc,
+  main = "Mike's Null Distribution of Regression Slope",
+  xlab = "Slope Parameter")
+abline(v = slope_observed, lty = 2, col = "red", lwd = 2)
+```
+
+#Critical Slope Value
+
+```{r include = FALSE}
+quantile(result_mc, c(.05))
+
+#The observed slope of the real data was -0.02437131, so this is close but more negative. 
+
+#Now we want percentage of our distribution that is less than or equal to our observed slope value.
+n_less = sum(result_mc <= -0.02437131)
+n_less
+n_less/10000
+```
+#Alternative Distribution: Bootstrapping
+
+```{r include = FALSE}
+#Only need 1 set of resamping row indices because bootstrapping samples entire rows
+set.seed(345)
+index_1 = sample(nrow(dat_1), replace = TRUE)
+
+dat_boot = dat_1[index_1, ]
+head(dat_boot)
+
+#build another linear model and compare our slope coefficient to what we calculated with the original data
+fit_bs1 = lm(b.sidi ~ s.sidi, data = dat_boot)
+
+coef(fit_bs1)
+
+#Bootstrapping loop code for repeating the process many times (simialr to Monte Carlo loop)
+
+#Use numeric to create a vector to hold the results
+m = 10000 
+result_boot = numeric(m)
+
+for(i in 1:m)
+{
+  index_1 = sample(nrow(dat_1), replace = TRUE)
+  
+  dat_resampled_b = 
+  data.frame(
+    b.sidi = dat_1$b.sidi[index_1],
+    s.sidi = dat_1$s.sidi[index_1]
+  )
+
+fit_bs1 = lm(b.sidi ~ s.sidi, data = dat_resampled_b)
+  
+  result_boot[i] = coef(fit_bs1)[2]
+} 
+
+hist(
+  result_boot,
+  main = "Mike's Alternative Distribution of Regression Slope",
+  xlab = "Slope Parameter")
+abline(v = slope_observed, lty = 2, col = "red", lwd = 2)
+abline(v = 0, lty = 2, col = 1, lwd = 2)
+```
+#Plot both null and alternative distributions - use density plots
+
+```{r include = FALSE}
+plot(
+  density(result_mc),
+  main = "Mike's Null Distribution Density Plot",
+  xlab = "Slope Coefficient",
+  xlim = c(-0.05, 0.04),
+  ylim = c(0, 70),
+  col= "black",lwd=2)
+
+lines(
+  density(result_boot),
+  main = "Mike's Alternative Distribution Density Plot",
+  xlab = "Slope Coefficient",
+  col = "blue", lwd=2)
+
+legend(
+  x="topright",
+  bty="n",
+  legend=c('Null', 'Alt.'),
+  col=c("black", "blue"), lwd=2, inset=c(.1,.1))
+
+```
+
+#Lab Questions
+
+#Penguin Boot Q1-4
+
+```{r}
+#Remove Gentoo penguins using droplevels
+penguin_dat = droplevels(subset(penguins, species != "Gentoo"))
+{
+  boxplot(
+    flipper_length_mm ~ species, data = penguin_dat,
+    ylab = "Flipper length (mm)")
+}
+
+summary(penguin_dat$flipper_length_mm)
+#1 NA value
+
+
+
+boot_mean = function(x, i)
+{
+  return(mean(x[i], na.rm = TRUE))
+}
+#As explained in the Lab 07 walkthrough, we have to use our boot_mean() function, rather than mean() within our call to two.boot(). We need to do this to account for the na value (we know there is 1 for this variable).
+
+sample1_dat <- droplevels(subset(penguin_dat, species != "Chinstrap")) 
+sample2_dat <- droplevels(subset(penguin_dat, species != "Adelie")) 
+#Note: I'm guessing there is an easier way to subset the data for each species for the two.boot function, but this is what I could come up with...
+
+ boxplot(
+    flipper_length_mm ~ species, data = sample1_dat,
+    ylab = "Flipper length (mm)",
+    xlab = "Adelie species")
+ boxplot(
+    flipper_length_mm ~ species, data = sample2_dat,
+    ylab = "Flipper length (mm)",
+    xlab = "Chinstrap species")
+
+pen_boot = two.boot(sample1_dat$flipper_length_mm, sample2_dat$flipper_length_mm, boot_mean, R=10000)
+
+str(pen_boot)
+#Bootstrapped differences are stored in component called t
+#pen_boot$t
+
+#Q1 - Calculate the standard deviation of the differences in mean flipper length from your bootstrap simulation. Show the R-code you used to find do the calculation.
+sd(pen_boot$t, na.rm=TRUE)
+sd
+#Bootstrapped standard deviation = 1.01043
+
+#Q2 - Include your histogram of bootstrapped differences in your lab report (you don’t need to show the R-code but make sure your plot includes appropriate title, axes, etc.).
+hist(pen_boot$t,
+     main = "Histogram of 10,000 bootstrap differences\nin mean penguin flipper length",
+     xlab = "Difference in mean flipper lenth (mm)\nAdelie and Chinstrap Penguins")
+
+#Q3 (2 pts.): What was the 95% bootstrap CI you calculated using quantile()? Show the R-code you used to answer the question.
+quantile(pen_boot$t, c(0.025, 0.975))
+#95% CI = -7.855365, -3.887742 
+
+#Q4 (4 pts.): Do you think the resampled differences in means follow a skewed distribution? Your answer should make reference to the mean, median, and histogram of the differences in means.
+mean(pen_boot$t)
+median(pen_boot$t)
+#The resampled differences in means do not follow a skewed distribution. The histogram of the boostrapped differences in means looks like a normal distribution, which means it is a symmetrical distribution around the mean. In addition, the mean (-5.856474) and median (-5.86951) values are almost exactly the same, which indicate a symmetrical distribution. I would expect the mean and median to be unequal values for a skewed distribution. 
+
+
+```
+#Penguin EDCF Q5-7
+
+```{r}
+#Use pen_ecdf() to calculate the empirical probability of observing the mean difference predicted by the null hypothesis, i.e. 0 or greater.
+#1-pen_ecdf(0)
+#Answer = 0
+
+
+#Q5 (2 pts.): Show the R-code you used to create pen_ecdf()
+pen_ecdf = ecdf(pen_boot$t)
+plot(ecdf(pen_boot$t)) 
+
+
+#Q6 (2 pts.): What is the probability, according to the empirical distribution function, of observing a mean difference of -4.5 or greater? Show the R code you used to perform the calculation.
+1-pen_ecdf(-4.5)
+#Probability of observing a mean difference of -4.5 or greater = 0.0922 = 9.2%
+
+#Q7 (2 pts.): What is the probability, according to the empirical distribution function, of observing a mean difference of -8 or smaller? Show the R code you used to perform the calculation.
+pen_ecdf(-8)
+#Probability of observing a mean difference of -8 or smaller = 0.0173 = 1.7%. 
+#(output might not match this answer exactly because it is different each time I run the code. Perhaps I should have used set.seed for this?)
+
+```
+#Hypotheses Q8
+#Q8 (3 pts.): State the null and alternative hypotheses of a two-sample, two-tailed test for the difference in mean flipper lengths between the two penguin species.
+
+#The null hypothesis is that there is no difference in mean flipper lengths between the two penguin species (Chinstrap and Adelie). The mean difference under the null hypothesis is 0. 
+
+
+#The alternative hypothesis is that there is a significant difference in mean flipper lengths between the two penguin species (Chinstrap and Adelie). Since this is a two-tailed hypothesis, the mean difference could be either less than or greater than 0. 
+
+#Pines, Non-Parametric Test Q9
+
+```{r}
+veg = read.csv(here("data", "vegdata.csv"))
+head(veg)
+
+#Q9 (2 pts.): What was the p-value? Show the R-code you used to find out.
+#p-value = 0.05
+
+#Use subset to create a new data frame with only clipped or control treatments
+dat_tree = droplevels(subset(veg, treatment %in% c("control", "clipped")))
+
+boxplot(pine ~ treatment, dat = dat_tree)
+
+#Conduct a Wilcoxon ranked sum test on the difference in means between the treatments.
+
+wilcox.test(pine ~ treatment, data = dat_tree, alternative = "greater")
+
+```
+#Pines, Bootstrap Q10-11
+
+```{r}
+sample1_tree <- droplevels(subset(dat_tree, treatment != "control")) 
+sample2_tree <- droplevels(subset(dat_tree, treatment != "clipped")) 
+#Note: I'm guessing there is an easier way to subset the data for each species for the two.boot function, but this is what I could come up with...
+
+ boxplot(
+    pine ~ treatment, data = sample1_tree,
+    ylab = "Pine",
+    xlab = "Clipped Treatment")
+ boxplot(
+    pine ~ treatment, data = sample2_tree,
+    ylab = "Pine",
+    xlab = "Control Treatment")
+
+tree_boot = two.boot(sample1_tree$pine, sample2_tree$pine, boot_mean, R=10000)
+
+
+str(tree_boot)
+
+boot.ci(tree_boot)
+quantile(tree_boot$t, c(0.025, 0.975))
+
+hist(tree_boot$t,
+     main = "Bootstrap Differences in Mean Pine Tree Count\n for Clipped and Control Treatments, r=10,000",
+     xlab = "Difference in mean pine tree count\n clipped vs. control treatment")
+
+
+#Q10 (1 pt.): What were the endpoints of your bootstrap CI? Show the R-code you used to find out.
+quantile(tree_boot$t, c(0.025, 0.975))
+#Bootstrap 95% CI =  (4.37500, 29.87812) 
+
+
+#Q11 (1 pt.): What is the observed difference in mean tree counts and does it fall within the 95% bootstrap CI?
+#difference in mean pine count for clipped and mean pine count for control
+mean(sample1_tree$pine) - mean(sample2_tree$pine)
+#Answer: observed difference in mean tree counts = 16
+#Another way to code this would be to use tree_boot element:
+tree_boot$t0
+#Answer: observed difference in mean tree counts = 16
+
+#Yes, this observed difference in mean tree counts does fall within the 95% bootstrap CI of (4.38, 29.88).
+
+
+```
+#Resampling Model Coefficients Q12-17
+
+```{r}
+#Walkthrough code for z-standardizing b.sidi:
+
+  #Calculate the sample mean and sd:
+  b_sidi_mean = mean(dat_all$b.sidi, na.rm = TRUE)
+  b_sidi_sd   = sd(dat_all$b.sidi, na.rm = TRUE)
+  
+  # Use the subset-by-name symbol ($) to create a 
+  # new column of z-standardized values.
+  
+  dat_all$b.sidi.standardized = (dat_all$b.sidi - b_sidi_mean)/b_sidi_sd
+  
+  mean(dat_all$b.sidi.standardized)
+  #note that this value is effectively 0
+  sd(dat_all$b.sidi.standardized)
+
+#Q12 - Briefly describe the Simpson diversity index, and explain what it quantifies.
+#The Simpson diversity index is used to quantify the diversity of species for a given sample. It uses the number of individuals of each species and the number of different species present in a given sample. A sample is more diverse if the number of individuals per species is relatively even or there is not one or two species that comprise almost all of the individuals sampled. 
+
+#Q13 - Code for z-standardizing for s.sidi column
+  # Calculate the sample mean and sd:
+  s_sidi_mean = mean(dat_all$s.sidi, na.rm = TRUE)
+  s_sidi_sd   = sd(dat_all$s.sidi, na.rm = TRUE)
+  
+  # Use the subset-by-name symbol ($) to create a 
+  # new column of z-standardized values.
+  
+  dat_all$s.sidi.standardized = (dat_all$s.sidi - s_sidi_mean)/s_sidi_sd
+  
+  mean(dat_all$s.sidi.standardized)
+  #note that this value is effectively 0
+  sd(dat_all$s.sidi.standardized)
+  
+#Q14 (6 pts.): Show the code for your completed Monte Carlo simulation loop.
+  
+    #We'll use the select argument to extract just the two variables we need from the      data. then we will use a Monte Carlo randomization procedure to construct our own      null hypothesis test because we don't want to use the lm() function and assume the     errors are normally distributed around the mean. 
+  
+    dat_1 = 
+    subset(
+      dat_all,
+      select = c(b.sidi, s.sidi))
+  
+  #Use numeric to create a vector to hold the results
+  m = 10000 
+  result_mc = numeric(m)
+  
+  for(i in 1:m)
+  {
+    index_1 = sample(nrow(dat_1), replace = TRUE)
+    index_2 = sample(nrow(dat_1), replace = TRUE)
+    
+    dat_resampled_i = 
+    data.frame(
+      b.sidi = dat_1$b.sidi[index_1],
+      s.sidi = dat_1$s.sidi[index_2]
+    )
+  
+  fit_resampled_i = lm(b.sidi ~ s.sidi, data = dat_resampled_i)
+    
+    result_mc[i] = coef(fit_resampled_i)[2]
+  } 
+
+
+#Q15 (2 pts.): In your report, include a plot of your histogram of Monte Carlo resampled slopes. Include vertical lines showing the observed slope and the critical value from the resampled MC slopes.
+  
+  critical_mc = quantile(result_mc, c(.05))
+  
+  hist(
+    result_mc,
+    main = "Monte Carlo Null Distribution Slopes\n n=10,000",
+    xlab = "Slope Parameter")
+  abline(v = slope_observed, lty = 1, col = "blue", lwd = 2.0)
+  abline(v = critical_mc, lty = 3, col = "red", lwd = 2.0)
+  
+#Q16(2 pts.): What was your critical value? Was the observed slope less than the critical value?
+  critical_mc
+  slope_observed
+  #Critical value was -0.0132 and the observed slope was -0.0244. The observed slope was less than the critical value. 
+```
+#Q17 (3 pts.): What is your conclusion regarding the evidence of a negative relationship between vegetation cover diversity and bird diversity? Make sure to justify your conclusions using the results of your simulation analysis.
+
+I conclude that we can reject the null hypothesis that there is no relationship between the Simpson's diversity index for breeding birds and vegetation. The Monte Carlo simulation results show the distribution of the slope coefficients that we would expect if there was no real relationship between the diversity index of birds and the diversity index of vegetation. The critical slope value for our Monte Carlo randomization is larger than the observed slope value. The exact p-value for the number of slopes in the null distribution that were equal or less than the observed slope was 0.0018. These results indicate that it's unlikely that the negative relationship we observed between bird and vegetation diversity is due to chance alone and we can reject the null hypothesis. 
+
+```{r}
+critical_mc
+slope_observed
+#Now we want percentage of our distribution that is less than or equal to our observed slope value.
+n_less = sum(result_mc <= -0.02437131)
+n_less
+n_less/10000
+```
+
+#Q19-20
+
+```{r}
+#Q18 (2 pts.): Show the code you used in your bootstrap loop.
+
+#Bootstrapping loop code for repeating the process many times (similar to Monte Carlo loop) in order to simulate the alternative distribution
+
+#Use numeric to create a vector to hold the results
+m = 10000 
+result_boot = numeric(m)
+
+for(i in 1:m)
+{
+  index_1 = sample(nrow(dat_1), replace = TRUE)
+  
+  dat_resampled_b = 
+  data.frame(
+    b.sidi = dat_1$b.sidi[index_1],
+    s.sidi = dat_1$s.sidi[index_1]
+  )
+
+fit_bs1 = lm(b.sidi ~ s.sidi, data = dat_resampled_b)
+  
+  result_boot[i] = coef(fit_bs1)[2]
+} 
+
+hist(
+  result_boot,
+  main = "Alternative Distribution of Regression Slope",
+  xlab = "Slope Parameter")
+abline(v = slope_observed, lty = 2, col = "red", lwd = 2)
+abline(v = 0, lty = 2, col = 1, lwd = 2)
+
+#Q19 (4 pts.): Include your double density plot. 
+
+plot(
+  density(result_mc),
+  main = "Null and Alternative Distribution Density Plot",
+  xlab = "Slope Coefficient",
+  xlim = c(-0.05, 0.04),
+  ylim = c(0, 70),
+  col= "black",lwd=2)
+
+lines(
+  density(result_boot),
+  col = "blue", lwd=2)
+
+legend(
+  x="topright",
+  bty="n",
+  legend=c('Null', 'Alt.'),
+  col=c("black", "blue"), lwd=2, inset=c(.1,.1))
+
+
+
+```
+#Q20 (2 pts.): Recall that the bootstrap curve shows the distribution of plausible values for the slope coefficient if we could resample the original data. The Monte Carlo curve shows the distribution of plausible values for the slope coefficient if the null hypothesis were true. How can you interpret the region that falls under both curves?
+
+#The region that falls under both curves represents the error rates. This area includes both the Type II and Type I error rates, or the probability of failing to reject the null hypothesis when it should be rejected and the probability of rejecting the null hypothesis when in fact it should be accepted (ie nothing interesting is actually going on but we decide it is).

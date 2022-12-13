@@ -1,0 +1,8 @@
+"0","#The probability mass function of a binomial distribution with n=20 and p=0.1 would look like:"
+"0","x = 0:20"
+"0",""
+"0","barplot("
+"0","  dbinom(x, size = 20, prob = 0.1),"
+"0","  names.arg = x, space = 0,"
+"0","  main = ""Binomial PMF: n = 20, p = 0.1"","
+"0","  ylab = ""Pr(x)"", xlab = ""x = n successes"")"

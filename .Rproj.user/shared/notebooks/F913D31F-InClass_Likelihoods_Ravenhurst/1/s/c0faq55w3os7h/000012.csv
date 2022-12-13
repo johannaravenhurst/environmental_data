@@ -1,0 +1,6 @@
+"0","sum(log(dbinom(x = dat_all$WIWR, n_binom, p_binom)))
+"
+"1","[1]"
+"1"," -Inf"
+"1","
+"

@@ -1,0 +1,16 @@
+"0","png(filename = here(""inclass_SWTH_histogram.png""), width = 800, height = 600)
+SWTH_hist <-
+hist(dat_bird$SWTH, 
+     main = ""Corner Table_Bird Species"", 
+     xlab = ""Number of Swainson Thrush birds observed"", 
+     ylab = ""Frequency"", 
+     col = ""yellow"",
+     )
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

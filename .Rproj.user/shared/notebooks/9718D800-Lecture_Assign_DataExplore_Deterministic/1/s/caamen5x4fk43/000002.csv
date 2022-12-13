@@ -1,0 +1,8 @@
+"0","```r
+#Installing packages
+#install.packages(\"here\")
+require(here)
+```"
+"1","Loading required package: here
+here() starts at C:/Users/Johanna Ravenhurst/Documents/environmental_data
+"

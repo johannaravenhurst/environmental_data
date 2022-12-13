@@ -1,0 +1,230 @@
+---
+title: "Lab 03: Data Exploration and Deterministic Functions"
+author: "Johanna Ravenhurst"
+date: "2022-09-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install and load packages, read data in to data frames and check first few observations
+#install.packages("psych")
+require(psych)
+require(here)
+
+dat_bird <- read.csv(here("data", "bird.sta.csv"))
+dat_habitat <- read.csv(here("data", "hab.sta.csv"))
+
+head(dat_bird)
+head(dat_habitat)
+names(dat_bird)
+names(dat_habitat)
+#both datasets have variables "basin" (categorical) "sub" (categorical) "sta" (station plot number)
+
+#Build a new data.frame called dat_all using the merge() function with dat_birds and dat_habitat.
+#We can combine both data sets into a new data frame, but we need to be careful:
+#How do we know that there are the same number of rows in both data frames?
+# using structure, we see dat_bird has 1046 obs and 84 variables, dat_habitat has 1046 obs and 24 variables - so they have the same number of rows
+str(dat_bird)
+str(dat_habitat)
+
+#How can we be sure that we associate the correct row of dat_habitat and dat_birds?
+#I think we need to merge by the station plot number to line up the rows properly, since there is 1 row for each plot number. The metadata states that each data set contains a single record for each station(plot), so I would expect 38 rows total, but it looks like the plot number is repeated for different basins/subbasins as well. 
+summary(dat_bird$sta) #range 1-38
+
+dat_all <- merge(dat_bird, dat_habitat, sort = TRUE)
+str(dat_all)
+#merged dataset has 1046 observations and 105 variables. This makes sense becauase it should be the same number of rows but 84+24-3 variables = 105
+
+#test the merge operation by recreating scatterplot from example
+plot(ba.tot ~ elev, data = dat_all)
+```
+Presence/Absence
+
+```{r}
+sample(dat_all$CEWA, 100) #random sample, often mostly 0's
+summary(dat_all$CEWA) #min max median quartiles
+sum(dat_all$CEWA) #116 total birds
+str(dat_all$CEWA) #1046 total sites
+
+#Not sure how to find the number of sites in which they were >0
+count(dat_all$CEWA>0) #didn't work
+str(dat_all$CEWA>0) #returned boolean true/false...but doesn't give a count of observations >0
+
+#build Boolean vector from the column of count data for cedar waxwings.
+#Your Boolean vector should have TRUE values for each sampling location where at least one bird was observed, and FALSE for each sampling location where the bird was absent.
+
+boolean_CEWA <- dat_all$CEWA >=1
+
+#convert your Boolean presence/absence vector for cedar waxwings into a numeric vector. 
+
+cewa_present_absent <- as.numeric(boolean_CEWA)
+plot(x = dat_all$elev, y = cewa_present_absent)
+#How would you interpret the plot? Is elevation a good predictor of whether cedar waxwings are present?
+#It looks like cedar waxwings are present at a range of elevations, but they were present more frequently from about 200-500 meters of elevation. However, it's possible there were just more sample sites at those elevations and the proportion of sites with cedar waxwings present remains constant for the range of elevations.
+
+
+
+
+```
+Functions for Visually Estimating the Parameters of the Logistic Curve
+
+```{r}
+# Function to calculate the logistic parameter a given the slope and midpoint
+get_logistic_param_a = function(slope, midpoint)
+{
+  b = slope / 4
+  return (-midpoint * (slope / 4))
+}
+
+# Function to calculate the logistic parameter b given the slope
+get_logistic_param_b = function(slope)
+{
+  return (slope / 4)
+}
+
+
+# Calculate the value of the logistic function at x, given the parameters a and b.
+logistic = function(x, a, b)
+{
+  val = exp(a + b * x)
+  return(val / (1 + val))
+}
+
+# Calculate the value of the logistic function at x, given a slope and midpoint.
+logistic_midpoint_slope = function(x, midpoint, slope)
+{
+  b = get_logistic_param_b(slope)
+  a = get_logistic_param_a(slope, midpoint)
+  return(logistic(x, a, b))
+}
+```
+
+Logistic Fit Examples
+
+```{r}
+plot(x = dat_all$elev, y = cewa_present_absent)
+curve(logistic_midpoint_slope(x, midpoint = 400, slope = 0.1), add = TRUE)
+
+plot(x = dat_all$elev, y = cewa_present_absent)
+curve(logistic_midpoint_slope(x, midpoint = 400, slope = -0.1), add = TRUE)
+
+plot(x = dat_all$elev, y = cewa_present_absent)
+curve(logistic_midpoint_slope(x, midpoint = 400, slope = -0.005), add = TRUE)
+
+#Does elevation look like a good predictor of cedar waxwing presence/absence?
+#No
+#Does the logistic function look like a good model for cedar waxwing presence/absence?
+#No, the logistical model doesn't seem to add much here to explain the association between presence/absence and elevation
+#Perhaps a different variable would better explain the bird presence/absence.
+head(dat_all)
+#I'm guessing basal area might better explain bird presence/absence
+```
+
+PairPlots
+#Use the pair plot function from psych to create a pair plot of the three terrain variables (slope, aspect, elevation) and basal area.
+
+
+```{r}
+#pairs.panels is part of the psych package and produces nice pairplots
+pairs.panels(dat_all)
+
+#now subset to the 3 terrain variables and basal area
+names(dat_all)
+
+png(filename = here("pairplot_lab3.png"), width = 1000, height = 900)
+pairs.panels(dat_all[, c("elev", "slope", "aspect", "ba.tot")], main = "Terrain Variables and Total Basal Area Pair Plot")
+dev.off()
+```
+#Bird Species Plots
+Choose two bird species and create plots of presence/absence (on the y-axis) and basal area (on the x axes).
+
+```{r}
+str(dat_all)
+#CBCH = Chestnut-bk Chickadee
+#DEJU = Dark-eyed Junco
+
+sum(dat_all$CBCH) #1356 total birds
+str(dat_all$CBCH) #1046 total sites
+sum(dat_all$DEJU) #266 total birds
+str(dat_all$DEJU) #1046 total sites
+
+boolean_cbch <- dat_all$CBCH >=1
+#convert your Boolean presence/absence vector into a numeric vector. 
+cbch_present_absent <- as.numeric(boolean_cbch)
+
+png(filename = here("chickadeeplot_lab3.png"), width = 700, height = 700)
+plot(x = dat_all$ba.con, y = cbch_present_absent,
+     main = "Chestnut-bk Chickadee and Basal Area of Conifers",
+     xlab = "Basal Area of Conifers (m2 per ha)",
+     ylab = "Presence/Absence of Chestnut Chickadee",
+     cex = 0.8,
+     pch = 18,
+     col = adjustcolor(col = "steelblue", alpha.f =.4))
+curve(logistic_midpoint_slope(x, midpoint = 40, slope = 0.8), add = TRUE, col = "dark red")
+dev.off()
+
+#plot(x = dat_all$ba.hard, y = cbch_present_absent)
+#plot(x = dat_all$ba.snag, y = cbch_present_absent)
+#plot(x = dat_all$ba.tot, y = cbch_present_absent)
+#plot(x = dat_all$elev, y = cbch_present_absent)
+#plot(x = dat_all$slope, y = cbch_present_absent)
+#plot(x = dat_all$aspect, y = cbch_present_absent)
+
+
+
+boolean_deju <- dat_all$DEJU >=1
+#convert your Boolean presence/absence vector into a numeric vector. 
+deju_present_absent <- as.numeric(boolean_deju)
+
+png(filename = here("juncoplot_lab3.png"), width = 700, height = 700)
+plot(x = dat_all$ba.con, y = deju_present_absent,
+     main = "Dark-Eyed Junco and Basal Area of Conifers",
+     xlab = "Basal Area of Conifers (m2 per ha)",
+     ylab = "Presence/Absence of Dark-Eyed Junco",
+     cex = 0.8,
+     pch = 18,
+     col = adjustcolor(col = "steelblue", alpha.f =.4))
+
+curve(logistic_midpoint_slope(x, midpoint = 40, slope = -0.8), add = TRUE, col = "dark red")
+dev.off()
+
+
+
+#plot(x = dat_all$ba.hard, y = deju_present_absent)
+#plot(x = dat_all$ba.snag, y = deju_present_absent)
+#plot(x = dat_all$ba.tot, y = deju_present_absent)
+#plot(x = dat_all$elev, y = deju_present_absent)
+#plot(x = dat_all$slope, y = deju_present_absent)
+#plot(x = dat_all$aspect, y = deju_present_absent)
+
+
+```
+#Gray Jays
+
+
+```{r}
+
+#Q7 (1 pt.): How many total number of Gray Jays were observed in all of the sampling sites.
+#Gray Jay=GRJA
+
+sum(dat_all$GRJA) #181 total Gray Jays
+
+
+#Q9 (1 pt.): Calculate the total number of sampling sites in which Gray Jays were observed.
+#Hint: What happens when you use the sum() function on a vector of Boolean values?
+
+#create boolean values for if gray jays were observed or not
+boolean_grja <- dat_all$GRJA >=1
+#convert your Boolean presence/absence vector into a numeric vector. 
+grja_present_absent <- as.numeric(boolean_grja)
+#sum the sampling sites with gray jays present
+sum(grja_present_absent)
+sum(boolean_grja)
+#Answer is 110 sampling sites - can reach this with sum fucntion on the Boolean value or the numeric presence/absence vector
+
+```
+

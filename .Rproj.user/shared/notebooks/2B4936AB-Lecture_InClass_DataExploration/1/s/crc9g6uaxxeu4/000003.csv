@@ -1,0 +1,11 @@
+"0","require(here)
+png(filename = here(""basic_histogram.png""), width = 800, height = 600)
+hist(penguins$body_mass_g)
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

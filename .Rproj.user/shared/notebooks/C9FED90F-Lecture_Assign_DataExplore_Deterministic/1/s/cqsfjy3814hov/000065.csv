@@ -1,0 +1,7 @@
+"0",""
+"0","hist (dat_habitat$slope,"
+"0","      main = ""Histogram of Habitat Slope\nBy Johanna Ravenhurst"","
+"0","      col ="
+"0","        adjustcolor(col = ""steelblue"", alpha.f =.4),"
+"0","      border = ""blue"","
+"0","      xlab = ""Slope"")"

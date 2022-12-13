@@ -1,0 +1,4 @@
+"0",""
+"0","curve("
+"0","  exp_fun(x, 2.2, 1/15), add = FALSE, from = 0, to = 50,"
+"0","  ann = FALSE, axes = TRUE, ylab = ""f(x)""); box()"

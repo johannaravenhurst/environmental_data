@@ -1,0 +1,5 @@
+"0","#sample 20 observations with replacement"
+"0","set.seed(5431213)"
+"0",""
+"0","sim_sample = sample(sim_population, size = 20, replace = T)"
+"0","hist(sim_sample + 0.00001, main = ""sample size = 20"", xlab = ""x"")"

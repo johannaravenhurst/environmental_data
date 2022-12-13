@@ -1,0 +1,3 @@
+"0","fit_1 = lm(b.sidi ~ s.sidi, data = dat_all)"
+"2","Error in is.data.frame(data) : object 'dat_all' not found
+"

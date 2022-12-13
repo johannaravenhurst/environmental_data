@@ -1,0 +1,5 @@
+"0","# Reset the random number generator state for reproduceablility"
+"0","set.seed(1)"
+"0","flipper_shuffled = sample(dat_pen$flipper_length_mm)"
+"0",""
+"0","boxplot(flipper_shuffled ~ dat_pen$species)"

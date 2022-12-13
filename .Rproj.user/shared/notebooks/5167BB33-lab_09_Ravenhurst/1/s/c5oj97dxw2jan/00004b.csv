@@ -1,0 +1,7 @@
+"0",""
+"0","#A histogram of DBH"
+"0","hist("
+"0","  dat_fl$DBH_in,"
+"0","  main = ""Histogram of Tree Diameter at Breast Height"","
+"0","  xlab = ""Diameter at breast height (in)\n(DBH)"","
+"0","  ylim = c(0,1000))"

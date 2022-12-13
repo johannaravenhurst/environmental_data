@@ -1,0 +1,7 @@
+"0","plot("
+"0","  BRCR ~ ls,"
+"0","  data = birdhab,"
+"0","  main = ""Brown Creeper Abundance and Late-Successional Forest"","
+"0","  xlab = ""late-successional forest extent"","
+"0","  ylab = ""Brown Creeper abundance"""
+"0",")"

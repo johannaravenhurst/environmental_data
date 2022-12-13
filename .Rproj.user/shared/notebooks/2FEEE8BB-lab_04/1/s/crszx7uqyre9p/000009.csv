@@ -1,0 +1,21 @@
+"0","png(filename = here(""lab_04_randomlinear.png""), width = 1500, height = 1600, res=180)
+plot(y ~ x, data = dat_random_q9_2, pch = 5,
+     main = ""Two Randomly Generated Samples"",
+     col =
+        adjustcolor(col = ""red"", alpha.f =.9),
+      xlab = ""Random Normal Sample X"",
+      ylab = ""Random Binomial Sample Y"")
+
+guess_x = 0
+guess_y = 12
+guess_slope = 0.5
+
+curve(line_point_slope(x, guess_x, guess_y, guess_slope), add = T)
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

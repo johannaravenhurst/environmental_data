@@ -1,0 +1,4 @@
+"0","#resembles normal distribution with sample size of 100"
+"0",""
+"0","sim_sample_3 = sample(sim_population, size = 500, replace = T)"
+"0","hist(sim_sample_3 + 0.00001, main = ""sample size = 500"", xlab = ""x"")"

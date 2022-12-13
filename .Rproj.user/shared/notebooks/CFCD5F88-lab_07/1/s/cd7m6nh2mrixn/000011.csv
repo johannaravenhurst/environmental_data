@@ -1,0 +1,5 @@
+"0","require(here)"
+"0","require(palmerpenguins)"
+"2","Loading required package: palmerpenguins
+"
+"0","head(penguins)"

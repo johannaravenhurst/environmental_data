@@ -1,0 +1,6 @@
+"0","#Q6 - Include a conditional boxplot corresponding to the grouping structure in your fit_species model."
+"0"," boxplot("
+"0","    body_mass_g ~ species, data = penguins,"
+"0","    main = ""Body Mass of Penguins by Species"","
+"0","    ylab = ""body mass(g)"","
+"0","    xlab = ""species"")"

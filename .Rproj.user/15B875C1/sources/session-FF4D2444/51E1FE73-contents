@@ -1,0 +1,370 @@
+---
+title: 'Lab 6: Introduction to Inference'
+author: "Johanna Ravenhurst"
+date: "2022-11-05"
+output: html_document
+---
+
+```{r}
+require(here)
+require(palmerpenguins)
+```
+
+```{r include = FALSE}
+#Write function for calculating standard error
+
+rm(list = ls())
+
+sse_mean = function(x)
+{
+  sse = sd(x, na.rm=TRUE)/sqrt(length(!is.na(x)))
+  return (sse)
+}
+
+sse_mean(penguins$body_mass_g)
+sse_mean(mtcars$mpg)
+
+```
+```{r include = FALSE}
+boxplot(
+  flipper_length_mm ~ species, data = penguins,
+  ylab = "Flipper length (mm)")
+```
+
+```{r include = FALSE}
+#Remove the Gentoo species
+
+#dat_pen = subset(penguins, species != "Gentoo")
+#boxplot(
+#  flipper_length_mm ~ species, data = dat_pen,
+#  ylab = "Flipper length (mm)")
+
+#This didn't work properly - we need to use the droplevels() function
+
+dat_pen = droplevels(subset(penguins, species != "Gentoo"))
+{
+  boxplot(
+    flipper_length_mm ~ species, data = dat_pen,
+    ylab = "Flipper length (mm)")
+}
+```
+
+#Resampling with replacement - Monte Carlo (walkthrough code - not printed to html)
+
+```{r include = FALSE}
+# for reproducibility
+set.seed(123)
+
+flipper_shuffled = sample(
+  penguins$flipper_length_mm, replace = TRUE)
+
+{
+  par(mfrow = c(1, 2))
+  boxplot(
+    flipper_length_mm ~ species, data = penguins,
+    ylab = "Flipper length (mm)",
+    main = "Original Data")
+  boxplot(
+    flipper_shuffled ~ penguins$species,
+    ylab = "Flipper length (mm)",
+    main = "MonteCarlo Resampled Data",
+    xlab = "species")
+}
+
+par(mfrow = c(4, 4), mar = c(1, 1, 1, 1))
+for (i in 1:16)
+{
+  
+  flipper_shuffled = sample(
+    penguins$flipper_length_mm, replace = TRUE)
+  
+  boxplot(
+    flipper_shuffled ~ penguins$species,
+    ann = F, axes = F)
+  box()
+  
+}
+```
+
+#Bootstrap Resampling
+
+```{r include = FALSE}
+penguins2 = penguins[sample(1:nrow(penguins), replace = T), ]
+
+{
+  par(mfrow = c(1, 2))
+  boxplot(
+    flipper_length_mm ~ species, data = penguins,
+    ylab = "Flipper length (mm)",
+    main = "Original Data")
+  boxplot(
+    flipper_length_mm ~ species, data = penguins2,
+    ylab = "Flipper length (mm)",
+    main = "Bootstrap Data")
+}
+```
+#T-tests
+
+```{r include = FALSE}
+t.test(dat_pen$flipper_length_mm ~ dat_pen$species)
+
+#The t-test suggests that there is good evidence that the flipper length is different between the two species.
+
+    #Can you explain why? - The different in the group means was 5.7804 and the p-value was <0.001. This means that if the null hypothesis of no difference between the mean flipper lengths was true and we repeated sampled from these populations, we would have a less than 0.0001 chance of seeing this result. This indicates that we should reject the null hypothesis because it is highly unlikely to be true given these results. 
+```
+
+#Two-sample resampling
+
+```{r include = FALSE}
+# Reset the random number generator state for reproduceablility
+set.seed(1)
+flipper_shuffled = sample(dat_pen$flipper_length_mm)
+
+boxplot(flipper_shuffled ~ dat_pen$species)
+
+t_test_1 = t.test(flipper_shuffled ~ dat_pen$species)
+t_test_1
+```
+
+#Difference of means
+
+```{r include = FALSE}
+t_test = t.test(dat_pen$flipper_length_mm ~ dat_pen$species)
+t_test
+
+t_test$estimate
+
+diff_observed = round(diff(t_test$estimate), digits = 3)
+print(diff_observed, digits = 3)
+
+```
+#Calculate difference in means using aggregate function
+
+```{r include = FALSE}
+agg_means = aggregate(
+  flipper_length_mm ~ species, 
+  data = dat_pen, 
+  FUN = "mean", 
+  na.rm = TRUE)
+diff_observed = diff(agg_means[, 2])
+
+agg_means
+diff_observed
+```
+#Sample sizes
+#Use Table function to show the number of individuals of each species
+
+```{r include = FALSE}
+table(dat_pen$species)
+
+#Resampling with replacement is the same thing as randomly sampling 68 flipper lengths in one group and 152 in another
+n_1 = 68
+n_2 = 152
+
+dat_1 = sample(dat_pen$flipper_length_mm, n_1, replace = TRUE)
+dat_2 = sample(dat_pen$flipper_length_mm, n_2, replace = TRUE)
+
+diff_simulated = 
+  mean(dat_1, na.rm = TRUE) - mean(dat_2, na.rm = TRUE)
+
+print(c(observed = diff_observed, simulated = diff_simulated))
+
+```
+#Simulation Function
+
+```{r include = FALSE}
+x = dat_pen$flipper_length_mm
+n_1 = 68
+n_2 = 152
+
+dat_1 = sample(x, n_1, replace = TRUE)
+dat_2 = sample(x, n_2, replace = TRUE)
+
+diff_simulated = 
+  mean(dat_1, na.rm = TRUE) - mean(dat_2, na.rm = TRUE)
+
+two_group_resample_diff = function(x, n_1, n_2) 
+{
+  
+  dat_1 = sample(x, n_1, replace = TRUE)
+  dat_2 = sample(x, n_2, replace = TRUE)
+
+  difference_in_means= 
+  mean(dat_1, na.rm = TRUE) - mean(dat_2, na.rm = TRUE)
+  
+  return(difference_in_means)
+}
+#Confused about how to write functions...
+
+
+#Test the function once I write it:
+set.seed(54321)
+two_group_resample_diff(dat_pen$flipper_length_mm, 68, 152)
+```
+
+#Resampling experiment
+
+```{r include = FALSE}
+n = 200
+mean_differences = c()
+for (i in 1:n)
+{
+  mean_differences = c(
+    mean_differences,
+    two_group_resample_diff(dat_pen$flipper_length_mm, 68, 152)
+  )
+}
+hist(mean_differences)
+
+sum(abs(mean_differences) >= diff_observed)
+```
+#Lab Questions
+#Q1 - Sample Standard Error Function
+
+```{r}
+#Write function for calculating standard error
+
+rm(list = ls())
+
+sse_mean = function(x)
+{
+  sse = sd(x, na.rm=TRUE)/sqrt(length(!is.na(x)))
+  return (sse)
+}
+
+sse_mean(penguins$body_mass_g)
+sse_mean(mtcars$mpg)
+```
+
+#Q2-3 Two Group Resampling
+
+```{r}
+#Q2: Show R code for function
+two_group_resample_diff = function(x, n_1, n_2) 
+{
+  
+  dat_1 = sample(x, n_1, replace = TRUE)
+  dat_2 = sample(x, n_2, replace = TRUE)
+
+  difference_in_means= 
+  mean(dat_1, na.rm = TRUE) - mean(dat_2, na.rm = TRUE)
+  
+  return(difference_in_means)
+}
+
+#The function needed to sample with replacement because otherwise we just end up with our original sample again. 
+
+#Q3: This function performs Monte Carlo resampling and simulates a null hypothesis. It samples without preserving the structure of the data and potential associations between the variables in each row. 
+```
+
+#Q4-5: Resampled Flipper Lengths
+
+```{r}
+#Use your two_group_resample_diff() function along with a loop to generate 2000 resampled differences of means for flipper length between the two penguin species (Adelie and Chinstrap).
+
+#Code from walkthrough needed for this question
+dat_pen = droplevels(subset(penguins, species != "Gentoo"))
+{
+  boxplot(
+    flipper_length_mm ~ species, data = dat_pen,
+    ylab = "Flipper length (mm)")
+}
+
+agg_means = aggregate(
+  flipper_length_mm ~ species, 
+  data = dat_pen, 
+  FUN = "mean", 
+  na.rm = TRUE)
+diff_observed = diff(agg_means[, 2])
+
+agg_means
+diff_observed
+
+#my code
+
+n = 2000
+mean_differences = c()
+for (i in 1:n)
+{
+  mean_differences = c(
+    mean_differences,
+    two_group_resample_diff(dat_pen$flipper_length_mm, 68, 152)
+  )
+}
+
+#Q4: Histogram of resampled differences of means
+hist(mean_differences)
+
+#Q5: How many resampled differences of means had a magnitude greater than 5.8? (which is the difference we observed in the original data)
+
+
+sum(abs(mean_differences) >= diff_observed)
+
+#Answer = 0
+```
+#Q6 - Resampling and p-values
+
+#Q6 (2 pts.): Given a p value of less than 1 per 10 million, how many simulations do you think you would have to do to see a difference in mean flipper length equal to or greater than 5.8 mm?
+
+#I think I would have to run at least 10 million simulations to see a difference in mean flipper length equal to or greater than 5.8 mm. 
+
+#Q7-11 Resampling a different variable
+
+```{r}
+str(dat_pen)
+
+#Q7 (1 pt.): Include a boxplot of your chosen variable in your report.
+
+boxplot(
+    body_mass_g ~ species, data = dat_pen,
+    ylab = "Body Mass (g)")
+
+#Q8 Report the group means and difference between the means
+agg_means_mass = aggregate(
+  body_mass_g ~ species, 
+  data = dat_pen, 
+  FUN = "mean", 
+  na.rm = TRUE)
+diff_crit = diff(agg_means_mass[, 2])
+
+agg_means_mass
+#Adelie: 3,700.662 g
+#Chinstrap: 3,733.088 g 
+diff_crit
+#Difference between means = 32.42598
+
+```
+```{r}
+#T-test:
+t.test(dat_pen$body_mass_g ~ dat_pen$species)
+
+```
+#Q9 (4 pts.): Interpret the p-value from the t-test output in plain, non-technical English that a non-statistician would understand.
+
+#The p-value is 0.5879, which means that if I collected repeated random samples from this population of penguins, I would expect to observe this difference in mean body mass in about 59 % of the experiments. There is not a significant difference in the mean body mass between these two penguin species and even with repeated sampling I would not expect to be able to reject the null hypothesis of no difference in body mass between these two species. 
+
+```{r}
+#Resampling with 1000 repititions
+n = 1000
+mean_differences_q10 = c()
+for (i in 1:n)
+{
+  mean_differences_q10 = c(
+    mean_differences_q10,
+    two_group_resample_diff(dat_pen$body_mass_g, 68, 152)
+  )
+}
+
+#Q10 (2 pts.): How many differences in means were greater than diff_crit? 
+
+sum(abs(mean_differences_q10) >= diff_crit)
+
+#Answer = 614 differences in means were greater than diff_crit
+
+#Q11 (1 pt.): Include a histogram of your simulation results in your report. Make sure it has appropriate title and labels.
+hist(mean_differences,
+     main = "Resampled Differences in Mean Body Mass (g)\n n=1000",
+     xlab = "Difference in Mean Body Mass (g)")
+
+```
+

@@ -1,0 +1,209 @@
+---
+title: "Using Models 1"
+author: "Johanna Ravenhurst"
+date: "2022-11-25"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+---
+
+```{r}
+#Setup and examine dataset
+require(here)
+catrate = read.csv(here("data", "catrate.csv"))
+head(catrate)
+summary(catrate)
+str(catrate)
+
+```
+# **Q1 - Catastrophic Rate Histogram**
+*Create a histogram of the salamander reproduction catastrophic rates.* 
+
+```{r}
+hist(
+  catrate$cat.rate,
+  main = "Salamander Reproduction Catastrophe Rates",
+  xlab = "Catastrophe Rate")
+```
+
+# **Q2 - Normality Test** 
+*Conduct a Shapiro-Wilk test of normality of the salamander catastrophic rates. Report the p-value and show the R-code you used to conduct the test.*
+
+```{r}
+shapiro.test(catrate$cat.rate)
+
+#The p-value for the Shapiro test is 0.04097, which is low. This indicates that we have evidence to reject the null hypothesis that the data were sampled from a normally-distributed population. 
+```
+# **Q3 - What is the null hypothesis for the Shapiro test?**
+The null hypothesis is that the salamanders were sampled from a population that has a normally-distributed catastrophe rate. 
+
+# **Q4** 
+*Based on the Shapiro test results, is there strong evidence that the sample came from a non-normally-distributed population?*
+
+The p-value for the Shapiro test is 0.04097, which is below 0.05. This indicates that we have evidence to reject the null hypothesis that the data were sampled from a normally-distributed population. 
+
+# T-Test 1 - One-Sample Tests: Tests for Difference from Expectation
+
+# **Q5 - Code for t-test**
+```{r}
+#1-sample test on the catastrophic rate
+#null hypothesis is that the observed mean cat rate value is not significantly different from an expected mean value of 0.28
+#alternative is that the observed mean cat rate is different from 0.28
+t.test(cat.rate ~ 1, data = catrate, alternative = c("two.sided"), mu = 2/7)
+```
+# **Q6 - State the null hypothesis of the test, in plain nontechnical English.**
+The null hypothesis is that the average observed catastrophe rate in this salamander population is the same as the average pond late-filling rate, which is 2/7. 
+
+# **Q7 -  Is this a one- or two-tailed test?**
+This is a two-tailed test because our alternative hypothesis is that the observed catastrophe rate is different from the pond late-filling rate. We did not specify a direction, so we will reject the null hypothesis if the observed rate is significantly less than or greater than the pond late-filling rate. 
+
+# **Q8**
+*What is the p-value from your t-test? Interpret the p-value as a false-positive rate using nontechnical English that a non-scientist would understand.*
+The p-value is 0.01193, which is lower than my threshold cutoff value of 0.05. This p-value means that there is a 1.2% probability of incorrectly deciding that the observed catastrophe rate is significantly different from the average pond late-filling rate. 
+
+# **Q9** 
+*What is the confidence interval for the difference between the null hypothesis and alternative hypothesis means? Did it include zero?*
+The 95% confidence interval is (0.3526, 0.7261). This interval does not include zero.
+
+
+# **Q10**
+*Considering the results from your t-test, did you conclude that there was strong evidence to reject the null hypothesis?*
+The Student's t test resulted in a p-value of 0.01, which indicates that we have strong evidence to reject the null hypothesis that the observed catastrophe rate comes from a population in which the catastrophes rate is equal to 2/7, which is the mean rate of late pond-filling in the fall. The observed mean in our data is significantly different from that mean rate of 2/7, and it could be either higher or lower than that expected mean. The mean observed catastrophe rate was 0.54 with a 95% CI of (0.35, 0.73). This is a relatively narrow confidence interval and it does not include zero or the late pond-filling rate of 0.29, which is additional evidence to back up our rejection of the null hypothesis. 
+
+
+
+```{r include = FALSE}
+#Walkthrough
+#One-sided Alternative Hypothesis that the Observed Mean is Greater than 2/7
+t.test(cat.rate ~ 1, data = catrate, alternative = c("greater"), mu = 2/7)
+```
+
+
+```{r include = FALSE}
+#Walkthrough
+#One-sided Alternative Hypothesis that the Observed Mean is Less than 2/7
+t.test(cat.rate ~ 1, data = catrate, alternative = c("less"), mu = 2/7)
+
+#The p-value is 0.994 with the alternative hypothesis of less than the expected value of 2/7 . This is a high p-value and indicates that we do not have evidence to reject the null hypothesis that the observed mean cat value is equal to 2/7 or higher. 
+
+```
+# Non-parametric One-Sample Test: The Wilcoxon Rank Sum Test (Q11-13)
+
+# **Q11**
+*Show the code you used to conduct the test.*
+
+```{r}
+#Small samples from a non-normal distribution, use Wilcoxon's signed rank test (Mann-Whitney test)
+wilcox.test(catrate$cat.rate, mu = 2 / 7)
+```
+# **Q12**
+*Compare the p-value with the p-value you got from the t-test.*
+The p-value from the Wilcoxon test was 0.006 and the p-value from the t-test was 0.01, so the p-value from the Wilcoxon test was slightly smaller but they were quite close. 
+
+# **Q13**
+*Considering the results from your rank sum test, did you conclude that there was strong evidence to reject the null hypothesis?*
+Yes, the small p-value of 0.006 indicates that we have significant evidence to reject the null hypothesis that the mean observed catastrophe rate was equal to the late pond-filling rate. 
+
+
+# Comparing the two tests (Q14-15)
+
+# **Q14**
+*Compare the overall conclusions you could draw from the results of the two tests.*
+Based on the results of the two tests I can reject the null hypothesis that the observed mean catastrophe rate is the same as the late pond-filling rate. 
+
+
+# **Q15**
+*Considering the numerical and graphical data exploration, which test do you think was more appropriate for these data?*
+The Wilcoxon test was more appropriate for these data because we do not have evidence to support the assumption that the residuals in these data are normally distributed. The Shapiro test resulted in a rejection of the null hypothesis that these data came from a normally-distributed population, so it is more appropriate to use the Wilcoxon test which does not require the assumption of normally distributed residuals. In addition, the histogram of the catastrophe rate does not look like a normal distribution. 
+
+
+# Two-Sample Tests - Palmer Penguin Data
+```{r}
+require(palmerpenguins)
+penguin_dat = droplevels(subset(penguins, species != "Gentoo"))
+summary(penguin_dat)
+
+boxplot(
+  flipper_length_mm ~ species, 
+  data = penguin_dat,
+  ylab = "Flipper Length (mm)")
+```
+
+
+# **Q16**
+*Show the R-code you used to conduct tests of normality for the flipper lengths of Chinstrap and Adelie penguins.*
+
+```{r}
+#need to use subset() to extract the flipper measurements for individuals species in order to conduct the Shapiro test for each species separately. Another method would be to use the aggregate() function to conduct species-specific tests instead of creating separate data sets
+
+# Extract the Adelie penguin data
+dat_adelie = subset(penguin_dat, species == "Adelie")
+shapiro.test(dat_adelie$flipper_length_mm)
+
+# Extract the Chinstrap penguin data
+dat_chinstrap = subset(penguin_dat, species == "Chinstrap")
+shapiro.test(dat_chinstrap$flipper_length_mm)
+
+```
+# **Q17** 
+*Interpret the test results. Do you conclude that the flipper lengths are normally-distributed for each species? Make sure your answers make reference to the test output.*
+The p-value for the Adelie penguins is 0.72 and the p-value for the Chinstrap penguins is 0.81. These high p-values indicate that we do not have evidence to reject the null hypothesis. The null hypothesis is that these data were sampled from a penguin population with normally-distributed flipper lengths, so based on this test we conclude that these data satisfy the assumption that flipper lengths are normally-distributed for each species. 
+
+# **Q18 - Flipper Histograms**
+*Save your figure to a file and include it in your report. Your figure needs to have appropriate dimensions such that the two histograms are not vertically stretched.*
+
+```{r}
+png(filename = here("Models1_FlipperHist.png"), width = 1500, height = 900, res=180)
+{
+  par(mfrow = c(1, 2))
+  hist(
+    dat_adelie$flipper_length_mm,
+    xlab = "Flipper length (mm)",
+    main = "Flipper Length Distribution\nAdelie Penguin ")
+  hist(
+    dat_chinstrap$flipper_length_mm,
+    xlab = "Flipper length (mm)",
+    main = "Flipper Length Distribution\nChinstrap Penguin ")
+}
+dev.off()
+
+{
+  par(mfrow = c(1, 2))
+  hist(
+    dat_adelie$flipper_length_mm,
+    xlab = "Flipper length (mm)",
+    main = "Flipper Length Distribution\nAdelie Penguin ")
+  hist(
+    dat_chinstrap$flipper_length_mm,
+    xlab = "Flipper length (mm)",
+    main = "Flipper Length Distribution\nChinstrap Penguin ")
+}
+```
+
+
+# Two-sample t-test
+
+
+# **Q19**
+*State the alternative hypothesis of the test, in plain nontechnical English.*
+The alternative hypothesis is that, on average, Adelie penguins have a different flipper length than Chinstrap penguins. We are not hypothesizing a specific direction, so the average flipper length of Adelie penguins could be either lower or higher than that of Chinstrap penguins. 
+
+# **Q20**
+*Include the code you used to conduct the t-test.*
+
+```{r}
+t.test(flipper_length_mm ~ species, data = penguin_dat, alternative = c("two.sided"))
+```
+The p-value is very small, so we have evidence to reject the null hypothesis that there is no difference in mean flipper length when comparing Adelie and Chinstrap penguins. 
+
+
+
+```{r include = FALSE}
+#Non-parametric Two-Sample Test: The Wilcoxon Rank Sum Test
+#Small samples from a normal distribution, here is the result if we use Wilcoxon's signed rank test (Mann-Whitney test). But I think it makes more sense to use the t-test here since the residuals are normally distributed in these samples.
+
+wilcox.test(flipper_length_mm ~ species, data = penguin_dat, alternative = c("two.sided"))
+```
+

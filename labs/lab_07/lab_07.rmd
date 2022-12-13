@@ -1,0 +1,511 @@
+---
+title: 'Lab 07: The Bootstrap'
+author: "Johanna Ravenhurst"
+date: "2022-11-07"
+output: html_document
+---
+
+```{r}
+require(here)
+
+moths = read.csv(here("data", "moths.csv"))
+head(moths)
+
+```
+
+#Demo of apply function (walkthrough)
+#If the task requires several steps, and perhaps some intermediate variables, a for-loop is often better.
+#Here’s a DataCamp tutorial on apply functions you can check out for some more examples:
+#https://www.datacamp.com/community/tutorials/r-tutorial-apply-family
+
+```{r include = FALSE}
+# Create simulated data
+dat = matrix(1:49, nrow = 7, ncol = 7)
+print(dat)
+
+#minimum of each row
+apply(dat, MARGIN = 1, FUN = min)
+
+#maximum of each row
+apply(dat, MARGIN = 1, FUN = max)
+
+#mean values for each column
+apply(dat, MARGIN = 2, FUN = mean)
+```
+#Bootstrapping - simulate the alternative hypothesis, resampling rows with replacement
+#One of the most important uses of the bootstrap is calculating non-parametric confidence intervals.In this context, the bootstrap simulates the Frequentist ideal of obtaining estimates from repeated similar experiments.
+
+#Parametric CI for Moth Data
+#T-distribution
+
+```{r include = FALSE}
+# Choose significance level
+alpha = 0.05
+
+# 2: Calculate sample standard error:
+n = sum(!is.na(moths$anst))
+sse = sd(moths$anst, na.rm = TRUE) / sqrt(n)
+
+# 3: Calculate critical t-values:
+t_crit = abs(qt(alpha / 2, df = n - 1))
+
+# 4: Calculate the CI radius:
+ci_radius = sse * t_crit
+
+# The CI is the sample mean +/- the radius:
+anst_ci = c(
+  lower = mean(moths$anst) - ci_radius,
+  upper = mean(moths$anst) + ci_radius)
+
+print(round(anst_ci, 4))
+
+#If the confidence interval does not contain 0, then we can say that the mean is unlikely to have come from a distribution with a mean of 0. In other words, the population mean is likely to be different than zero.
+```
+#Boostrap CI - makes sense here because sample size <30 and we're not sure we can assume that underlying population has a normal distribution
+
+```{r include = FALSE}
+#Create empty results vector
+m = 10000
+
+# numeric() creates an vector of length m with all values initialized to zero
+result = numeric(m)
+head(result)
+
+#perform bootstrap
+for(i in 1:m)
+{
+  result[i] = mean(sample(moths$anst, replace=TRUE))
+}
+
+#Calculate mean of boostrap means and the quantiles
+mean(result)
+quantile(result,c(0.025,0.975))
+
+
+```
+#Boot () function in R for Bootstrap sampling
+
+```{r include = FALSE}
+#install.packages("boot")
+require(boot)
+#boot(data, statistic, R)
+#R is the number of resamplings you want to perform
+#data is the data object you want to resample. It can be a vector, matrix, or data.frame.
+#statistic is a function that returns the statistic of interest. You don’t put quotes around the name of the function.
+#There are restrictions on the order and types of arguments that this function must take.
+#We’ll usually need to write a custom function to meet the restrictions.
+
+boot_mean = function(x, i)
+{
+  return(mean(x[i], na.rm = TRUE))
+}
+#we have to use our boot_mean() function, rather than mean() within our call to boot()
+
+myboot = 
+  boot(
+    data = moths$anst,
+    statistic = boot_mean,
+    R = 10000)
+print(myboot)
+
+str(myboot)
+
+mean(moths$anst)
+myboot$t0
+mean(myboot$t) - myboot$t0
+sd(myboot$t)
+
+#Bootstrap CI
+quantile(
+  myboot$t,
+  c(0.025, 0.975))
+
+#Note that you’ll get slightly different quantities each time since the process involves random numbers
+
+```
+#Rarefaction Curve
+
+```{r include = FALSE}
+
+#Step 1 - set up bootstrap
+
+#remove first column of data with arbitrary site id
+moth_dat = moths[,-1]
+head(moth_dat)
+
+n = nrow(moth_dat) #number of rows or sample observations
+m = 100 #number of bootstrap iterations
+moth_result = matrix(
+  nrow = m,
+  ncol = n)
+#We will need a row for each bootstrap iteration and a column for each sampling intensity – which can range from a single observation to the full data set (n)
+
+#This says to select the rows from data corresponding to the result of the sample() function.
+#data[sample(...), ]
+
+
+#Full Boostrap simulation code:
+n = nrow(moth_dat) #number of rows or sample observations
+
+m = 100 #number of bootstrap iterations
+
+moth_result = matrix(
+  nrow = m,
+  ncol = n)
+
+
+# The outer loop: runs once for each bootstrap iteration.  index variable is i
+for(i in 1:m)
+{
+  # The inner loop: simulates increasing sampling intensity
+  # Sampling intensity ranges from 1 site to the complete count of sites (24)
+  # index variable is j
+  for(j in 1:n)
+  {
+    # sample the input data row indices, with replacement
+    rows_j = sample(n, size = j, replace=TRUE)
+
+    # Creates a new data matrix from the resampled rows.
+    t1 = moth_dat[rows_j, ]
+
+    # Calculates the column sums of the new data matrix.
+    t2 = apply(t1, 2, sum)
+
+    # Counts the number of columns in which any moths were observed
+    moth_result[i, j] = sum(t2 > 0)
+  }
+}
+
+head(moth_result)
+
+```
+#Creating a function - First Draft
+
+```{r include = FALSE}
+rarefaction_sampler = function(input_dat, n_iterations)
+{
+  n = nrow(moth_dat) #number of rows or sample observations
+  m = 100 #number of bootstrap iterations
+
+  moth_result = matrix(
+    nrow = m,
+    ncol = n)
+
+  # The outer loop: runs once for each bootstrap iteration.  index variable is i
+  for(i in 1:m)
+  {
+    # The inner loop: simulates increasing sampling intensity
+    # Sampling intensity ranges from 1 site to the complete count of sites (24)
+    # index variable is j
+    for(j in 1:n)
+    {
+
+      # sample the input data row indices, with replacement
+      rows_j = sample(n, size = j, replace=TRUE)
+
+      # Creates a new data matrix
+      t1 = moth_dat[rows_j, ]
+
+      # Calculates the column sums
+      t2 = apply(t1, 2, sum)
+
+      # Counts the number of columns in which any moths were observed
+      moth_result[i, j] = sum(t2 > 0)
+    }
+  }
+
+  return(moth_result)
+}
+
+rarefact = rarefaction_sampler(moth_dat, 100)
+head(rarefact)
+```
+```{r include = FALSE}
+#Second draft of function - remove any arguments that reference values that aren't contained within the function
+
+rarefaction_sampler = function(input_dat, n_iterations)
+{
+  n_input_rows = nrow(input_dat)
+
+  results_out = matrix(
+    nrow = n_iterations,
+    ncol = n_input_rows)
+
+  # The outer loop: runs once for each bootstrap iteration.  index variable is i
+  for(i in 1:n_iterations)
+  {
+    # The inner loop: simulates increasing sampling intensity
+    # Sampling intensity ranges from 1 site to the complete count of
+    # sites in the input data (n)
+    # index variable is j
+    for(j in 1:n)
+    {
+      # sample the input data row indices, with replacement
+      rows_j = sample(n, size = j, replace=TRUE)
+
+      # Creates a new data matrix
+      t1 = input_dat[rows_j, ]
+
+      # Calculates the column sums
+      t2 = apply(t1, 2, sum)
+
+      # Counts the number of columns in which any moths were observed
+      results_out[i, j] = sum(t2 > 0)
+    }
+  }
+  return(results_out)
+}
+
+rarefact = rarefaction_sampler(moth_dat, 100)
+head(rarefact)
+```
+#Final function
+
+```{r include = FALSE}
+# This clears the current R session's environment
+rm(list = ls())
+
+# Re-read my data:
+moths = read.csv(here("data", "moths.csv"))
+moth_dat = moths[,-1]
+
+rarefaction_sampler = function(input_dat, n_iterations)
+{
+  n_input_rows = nrow(input_dat)
+
+  results_out = matrix(
+    nrow = n_iterations,
+    ncol = n_input_rows)
+
+  # The outer loop: runs once for each bootstrap iteration.  index variable is i
+  for(i in 1:n_iterations)
+  {
+    # The inner loop: simulates increasing sampling intensity
+    # Sampling intensity ranges from 1 site to the complete count of
+    # sites in the input data (n)
+    for(j in 1:n_input_rows)
+    {
+      # sample the input data row indices, with replacement
+      rows_j = sample(n_input_rows, size = j, replace=TRUE)
+
+      # Creates a new data matrix
+      t1 = input_dat[rows_j, ]
+
+      # Calculates the column sums
+      t2 = apply(t1, 2, sum)
+
+      # Counts the number of columns in which any moths were observed
+      results_out[i, j] = sum(t2 > 0)
+    }
+  }
+  return(results_out)
+}
+
+rarefact = rarefaction_sampler(moth_dat, 100)
+
+head(rarefact)
+```
+#Building the Rarefaction curve
+
+```{r include = FALSE}
+# Re-read my data:
+moths = read.csv(here("data", "moths.csv"))
+rarefact = rarefaction_sampler(moths[,-1], 10000)
+
+rare_mean = apply(rarefact, 2, mean)
+rare_quant = apply(rarefact, 2, quantile, probs=c(0.025, 0.975))
+rare = t(rbind(rare_mean, rare_quant))
+
+matplot(
+  rare,
+  type='l',
+  xlab='Number of sampling plots',
+  ylab='Species richness',
+  main="Mike's Awesome Rarefaction Curve")
+
+legend(
+  'bottomright',
+  legend=c('mean','2.5%','97.5%'),
+  lty=c(1,2,3),col=c(1,2,3), inset=c(.1,.1))
+```
+#Lab Questions
+
+```{r}
+require(here)
+require(palmerpenguins)
+head(penguins)
+```
+
+
+#Penguin Parametric CI Q1-5
+
+```{r}
+#Calculate a parametric 95% CI for mean bill length (in mm) for the Gentoo penguins in the penguins dataset from package palmerpenguins using your SSE function. For this calculation you should use Student’s t-distribution to calculate the critical values.
+rm(list = ls())
+
+
+#Q1 (1 pt.): What is the sample size, n? Show the code you used for the calculation and remember to check for missing data.
+summary(penguins$bill_length_mm)
+#Note there are 2 NA's in this variable
+n = sum(!is.na(penguins$bill_length_mm))
+n
+#Sample size is 342
+
+#Q2 (1 pt.): What is the sample standard deviation? Show the code you used for the calculation.
+#This code is within my sse function (see below).
+sd(penguins$bill_length_mm, na.rm=TRUE)
+sd
+#Sample standard deviation = 5.4595
+
+#Q3 (2 pts.): What are the critical t-values? Show the R code you used for the calculation.
+# Choose significance level
+alpha = 0.05
+# Calculate critical t-values:
+t_crit = abs(qt(alpha / 2, df = n - 1))
+t_crit
+
+#Q4 (1 pt.): What is the sample standard error? Show the R code you used for the calculation.
+#Function for calculating standard error (from Lab 6)
+
+sse_mean = function(x)
+{
+  n = sum(!is.na(x))
+  sse = sd(x, na.rm=TRUE)/sqrt(n)
+  return (sse)
+}
+#Note - I changed my lab 6 function to include the n=sum part (copied from Lab 7 walkthrough), because I like it better than the length code I wrote for Lab 6. I think the n=sum() code is clearer and I like having n defined on a separate line. 
+
+# Calculate sample standard error:
+sse = sse_mean(penguins$bill_length_mm)
+sse
+#Sample standard error = 0.2952
+
+
+#Q5 (2 pts.): Finally, construct the CI and show the R code you used for the calculation.
+
+# Calculate the CI radius:
+ci_radius = sse * t_crit
+
+# The CI is the sample mean +/- the radius:
+bill_ci = c(
+  lower = mean(!is.na(penguins$bill_length_mm)) - ci_radius,
+  upper = mean(!is.na(penguins$bill_length_mm)) + ci_radius)
+
+print(round(bill_ci, 4))
+
+#CI is 0.414, 1.575
+
+
+```
+#Penguin Bootstrap CI Q6-8
+
+#Calculate a bootstrap 95% CI for mean bill length (in mm) for the Gentoo penguins in penguins dataset from package palmerpenguins.
+#Use the boot() function from package boot()
+
+```{r}
+#Q6 (1 pt.): What is the CI?
+#Answer - 95% CI is (43.3402, 44.5038)
+
+#Q7 (1 pt.): Show the r code you used to call the boot() function.
+require(boot)
+boot_mean = function(x, i)
+{
+  return(mean(x[i], na.rm = TRUE))
+}
+#As explained in the walkthrough, we have to use our boot_mean() function, rather than mean() within our call to boot(). We need to do this to account for the na values (we know there are 2 for this variable).
+
+myboot = 
+  boot(
+    data = penguins$bill_length_mm,
+    statistic = boot_mean,
+    R = 10000)
+print(myboot)
+
+str(myboot)
+
+#Q8 (2 pts.): Show the r code you used to calculate the upper and lower 2.5% quantiles.
+#Bootstrap CI
+quantile(
+  myboot$t,
+  c(0.025, 0.975))
+
+```
+#Rarefaction Sampler Q9-13
+
+```{r}
+#Q9 (5 pts.): Show your completed rarefaction_sampler() function.
+# This clears the current R session's environment
+rm(list = ls())
+
+# Re-read my data:
+moths = read.csv(here("data", "moths.csv"))
+moth_dat = moths[,-1]
+
+rarefaction_sampler = function(input_dat, n_iterations)
+{
+  n_input_rows = nrow(input_dat)
+
+  results_out = matrix(
+    nrow = n_iterations,
+    ncol = n_input_rows)
+
+  # The outer loop: runs once for each bootstrap iteration.  index variable is i
+  for(i in 1:n_iterations)
+  {
+    # The inner loop: simulates increasing sampling intensity
+    # Sampling intensity ranges from 1 site to the complete count of
+    # sites in the input data (n)
+    for(j in 1:n_input_rows)
+    {
+      # sample the input data row indices, with replacement
+      rows_j = sample(n_input_rows, size = j, replace=TRUE)
+
+      # Creates a new data matrix
+      t1 = input_dat[rows_j, ]
+
+      # Calculates the column sums
+      t2 = apply(t1, 2, sum)
+
+      # Counts the number of columns in which any moths were observed
+      results_out[i, j] = sum(t2 > 0)
+    }
+  }
+  return(results_out)
+}
+
+
+#Q10 (1 pt.): What did you find most difficult about building the function?
+#I didn't find it very difficult to build this function because I used the example from the walkthrough and fixed the error (was I supposed to build something different?). However, I have been finding it difficult to try to build functions from scratch, and I think I would have had a hard time coming up with this function on my own. 
+
+
+#Q11 (4 pts.): Show the code you used to perform the simulations and construct the curve.
+rarefact = rarefaction_sampler(moth_dat, 10000)
+head(rarefact)
+
+rare_mean = apply(rarefact, 2, mean)
+rare_quant = apply(rarefact, 2, quantile, probs=c(0.025, 0.975))
+rare = t(rbind(rare_mean, rare_quant))
+
+
+
+#Q12 (4 pts.): Include your rarefaction curve plot in your report. Show the R-code you used to create your plot.
+matplot(
+  rare,
+  type='l',
+  lty=c(1,5,13),col=c(1,3,7), lwd=3,
+  xlab='Number of sampling locations',
+  ylab='Mean species richness',
+  main="Bootstrap Rarefaction Curve of Rare Moth Species\n n=10,000 replicates")
+
+legend(
+  'bottomright',
+  legend=c('Mean Species Richness','Lower 95% CI','Upper 95% CI'),
+  lty=c(1,5,13),col=c(1,3,7), lwd=3, inset=c(.1,.1))
+
+#Didn't have time to figure out the shaded 95% CI, but I am interested in the solution to this. 
+
+#Q13 (2 pts.): About how many sites should you visit if you want to see all of the moth species? Explain your reasoning using your rarefaction curve figure.
+#I would visit 25 sites in order to see all of the moth species, since the rarefaction curve shows that the mean, lower CI, and upper CI all reach a mean species richness of 10 after 25 sites. 
+
+```
+

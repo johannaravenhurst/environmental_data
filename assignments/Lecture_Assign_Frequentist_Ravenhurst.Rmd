@@ -1,0 +1,83 @@
+---
+title: "Lecture Assignment: Frequentist Concepts"
+author: "Johanna Ravenhurst"
+date: "2022-10-27"
+output: html_notebook
+---
+
+```{r}
+require(here)
+
+```
+
+#Law of total probability - sum of all events in the sample space is 1.0.
+
+```{r}
+pnorm(7.5, mean = 10, sd = 3)
+
+#what if we want probability of observing x=7.5 or higher?
+
+1- pnorm(7.5, mean = 10, sd = 3)
+
+```
+#Sampling Distribution
+
+Sampling distribution describes the distribution of the sample statistic
+
+two main factors that determine the width:
+1 - sample size (>30 sample the distribution approaches normal)
+2 - population standard deviation
+
+
+#Q1-3 Binomial Probability
+
+```{r}
+
+
+#Q1 (2 pts.): What is the probability of observing a count of exactly 3 successes in a binomial distribution with parameters n = 4 and p = 0.75?
+#Include your answer and the R code you used to find it.
+#Note: To receive full credit, you cannot use lower.tail = FALSE in your code.
+
+#Probability mass function - dbinom
+dbinom(3, 4, 0.75)
+#probability = 0.42, or 42% probability of observing a count of exactly 3 successes in a binomial distribution with these parameters.
+
+#Q2 (2 pts.): What is the probability of observing a count of 3 successes or fewer in a binomial distribution with parameters n = 4 and p = 0.75? 
+
+#Cumulative mass function - pbinom
+pbinom(3, 4, 0.75)
+#probability = 0.68, or 68% probability of observing a count of 3 successes or fewer in a binomial distribution with these parameters.
+
+#Q3 (2 pts.): What is the probability of observing more than 3 successes in a binomial distribution with parameters n = 5 and p = 0.75? 
+
+#Cumulative mass function - pbinom
+1-pbinom(3, 5, 0.75)
+
+#probability = 0.63, or 63% probability of observing more than 3 successes in a minomial distribution with these parameters.
+
+```
+#Q4-6 Normal Probability
+
+```{r}
+#Q4 (2 pts.): - What is the probability of observing a value of less than 1.2 from a normally-distributed population with mean = 2 and standard deviation = 2? 
+
+#Cumulative density function - pnorm
+pnorm(1.2, mean = 2, sd = 2)
+
+#probability = 0.34, 34% probability of observing a value of less than 1.2 from a normally-distributed population with these parameters.
+
+#Q5 (2 pts.): - What is the probability of observing a value of greater than 1.2 from a normally-distributed population with mean = 2 and standard deviation = 2? 
+
+#Cumulative density function - pnorm
+1-pnorm(1.2, mean = 2, sd = 2)
+
+#probability = 0.66, 66% probability of observing a value of greater than 1.2 from a normally-distributed population with these parameters.
+
+#Q6 (4 pts.): - What is the probability of observing a value between 1.2 and 3.2 from a normally-distributed population with mean = 2 and standard deviation = 2? 
+
+#Cumulative density function - pnorm
+pnorm(3.2, mean = 2, sd = 2) - pnorm(1.2, mean = 2, sd = 2)
+#probability = 0.38, or 38% probability of observing a value between 1.2 and 3.2 from a normally-distributed population with these parameters. 
+
+```
+

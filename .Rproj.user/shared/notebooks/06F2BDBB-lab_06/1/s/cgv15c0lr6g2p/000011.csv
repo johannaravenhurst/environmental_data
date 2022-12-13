@@ -1,0 +1,8 @@
+"0","agg_means = aggregate("
+"0","  flipper_length_mm ~ species, "
+"0","  data = dat_pen, "
+"0","  FUN = ""mean"", "
+"0","  na.rm = TRUE)"
+"0","diff_observed = diff(agg_means[, 2])"
+"0",""
+"0","agg_means"

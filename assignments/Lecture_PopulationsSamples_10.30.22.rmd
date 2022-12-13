@@ -1,0 +1,157 @@
+---
+title: "In-Class Populations Samples"
+author: "Johanna Ravenhurst"
+date: "2022-10-30"
+output: html_notebook
+---
+
+
+```{r}
+#The probability mass function of a binomial distribution with n=20 and p=0.1 would look like:
+x = 0:20
+
+barplot(
+  dbinom(x, size = 20, prob = 0.1),
+  names.arg = x, space = 0,
+  main = "Binomial PMF: n = 20, p = 0.1",
+  ylab = "Pr(x)", xlab = "x = n successes")
+```
+
+```{r}
+#Let’s make a ‘Population’ of 1 million binomially-distributed numbers:
+
+set.seed(12345)
+sim_population = rbinom(n = 1000000, size = 20, prob = 0.1)
+
+max(sim_population)
+#note that the maximum x value is 12. That means that even though the domain of a binomial distribution with n=20 and p=0.1 goes from 0 to 20, the probability of observing counts greater than 12 is so low that our ‘popualtion’ of one million doesn’t contain any!
+```
+```{r}
+#sample 20 observations with replacement
+set.seed(5431213)
+
+sim_sample = sample(sim_population, size = 20, replace = T)
+hist(sim_sample + 0.00001, main = "sample size = 20", xlab = "x")
+
+#with a sample of 20 it doesn't look like it came from a binomially-distributed population
+sim_sample_2 = sample(sim_population, size = 100, replace = T)
+hist(sim_sample_2 + 0.00001, main = "sample size = 100", xlab = "x")
+#resembles normal distribution with sample size of 100
+
+sim_sample_3 = sample(sim_population, size = 500, replace = T)
+hist(sim_sample_3 + 0.00001, main = "sample size = 500", xlab = "x")
+
+sim_sample_4 = sample(sim_population, size = 1000, replace = T)
+hist(sim_sample_4 + 0.00001, main = "sample size = 1000", xlab = "x")
+
+sim_sample_5 = sample(sim_population, size = 5000, replace = T)
+hist(sim_sample_5 + 0.00001, main = "sample size = 5000", xlab = "x")
+
+#sample sizes 500-5000 look more like the binomially-distributed population with a right skew
+
+sd(sim_sample)
+sd(sim_sample_2)
+sd(sim_sample_3)
+sd(sim_sample_4)
+sd(sim_sample_5)
+
+mean(sim_sample)
+mean(sim_sample_2)
+mean(sim_sample_3)
+mean(sim_sample_4)
+mean(sim_sample_5)
+
+#I expect the mean and sd to stabilize and get closer to the true parameters of the population as my sample size increases
+
+```
+#Sampling Distribution
+
+```{r}
+mean_sampler = function(pop, sample_size, n_means)
+{
+  # pre-allocate a results vector
+  means = vector(mode = "numeric", length = n_means)
+  
+  # sampling loop
+  for (i in 1:n_means)
+  {
+    samp = sample(pop, size = sample_size, replace = TRUE)
+    means[i] = mean(samp)
+  }
+  
+  return(means)
+}
+
+sample_means = mean_sampler(
+  pop = sim_population, 
+  sample_size = 30,
+  n_means = 200)
+
+hist(
+  sample_means,
+  main = "Distribution of Sample Means\nsample size: 30, number of means: 200",
+  xlab = "sample mean")
+
+#Set the sample size to a small number, say 2 or 3. What do you notice about the sampling distribution of the mean? Does it look normal? Does it look like the parent distribution?
+
+sample_means_2 = mean_sampler(
+  pop = sim_population, 
+  sample_size = 2,
+  n_means = 200)
+
+hist(
+  sample_means_2,
+  main = "Distribution of Sample Means\nsample size: 2, number of means: 200",
+  xlab = "sample mean")
+
+#The sampling distribution of the mean when the sample size is very small looks more like the binomial parent distribution, with a right skew. 
+
+
+#Try using a different distribution to create sim_population. For example, you could try an exponential distribution with rate parameter of 0.2:
+set.seed(12345)
+sim_population_exp = rexp(n = 1000000, rate = 0.2)
+
+hist(
+  sim_population_exp,
+  main = "Exponential Population\nrate = 0.2",
+  xlab = "pop2")
+
+sample_means_exp = mean_sampler(
+  pop = sim_population_exp, 
+  sample_size = 30,
+  n_means = 200)
+
+hist(
+  sample_means_exp,
+  main = "Distribution of Sample Means\nsample size: 30, number of means: 200",
+  xlab = "sample mean")
+
+sample_means_exp2 = mean_sampler(
+  pop = sim_population_exp, 
+  sample_size = 1,
+  n_means = 200)
+
+hist(
+  sample_means_exp2,
+  main = "Distribution of Sample Means\nsample size: 1, number of means: 200",
+  xlab = "sample mean")
+
+```
+
+
+#What happens to the sample standard deviation as you increase the sample size?
+
+#As I increase the sample size, the sample standard deviation stabilizes to the value of the population standard deviation.
+
+#What happens to the sample standard error as you increase the sample size?
+
+#As I increase the sample size, the sample standard error decreases. 
+
+#What happened to the histogram of sample means as your sample size got larger or smaller.
+
+#A histogram with a sample size of 1 or 2 seems to look like the parent population distribution. But then with sample sizes around 20-30 the sampling distribution looks normal. Then as the sample size gets larger it looks more like the parent population.
+
+
+#Compare the population histogram to a histogram of sample means calculated using a sample size of 1. Notice anything unusual?
+
+#The sample size of 1 sampling distribution looks like the parent distribution.

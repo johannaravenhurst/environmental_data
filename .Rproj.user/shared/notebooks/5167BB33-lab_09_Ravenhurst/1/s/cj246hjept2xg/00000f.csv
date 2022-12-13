@@ -1,0 +1,8 @@
+"0","#Example data from mice body mass before and after treatment"
+"0","#install.packages(""datarium"")"
+"0","require(datarium)"
+"2","Loading required package: datarium
+"
+"2","Warning: package ‘datarium’ was built under R version 4.2.2"
+"0","data(""mice2"")"
+"0","head(mice2)"

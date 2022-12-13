@@ -1,0 +1,136 @@
+---
+title: "InClass_DataFilePractice"
+author: "Johanna Ravenhurst"
+date: "2022-09-20"
+output: html_document
+---
+
+Use here() and read.csv() to read the three files into data.frame objects called:
+
+    dat_catrate
+    dat_delomys
+    dat_rope
+
+Use head() to view the first few lines of each data frame.
+
+Check how many columns contain numeric data in each of the 3 data frames.
+
+
+
+```{r}
+library(here)
+
+dat_catrate <- read.csv(here("data", "catrate.csv"))
+dat_delomys <- read.csv(here("data", "delomys.csv"))
+dat_rope <- read.csv(here("data", "rope.csv"))
+
+head(dat_catrate)
+head(dat_delomys)
+head(dat_rope)
+
+
+```
+
+You can plot histograms for any column that contains numeric data. For data sets with 2 or more numeric columns you can create scatterplots.
+
+```{r}
+
+plot(x = dat_catrate$pond, y = dat_catrate$success)
+
+plot(x = dat_rope$p.cut, y = dat_rope$p.strength, main="Johanna Ravenhurst's Plot", xlab= "Rope p.cut", ylab = "Rope strength")
+
+png(filename = here("inclass_scatter_rope.png"), width = 800, height = 600)
+plot(x = dat_rope$p.cut, y = dat_rope$p.strength, main="Johanna Ravenhurst's Plot")
+dev.off()
+```
+
+
+```{r}
+#After class - attempt at making a histogram 
+# use /n to start new line in title
+#use col to adjust the color
+#adjust color makes it lighter if less than 1
+
+hist (dat_delomys$body_length,
+      main = "Histogram of Body Length\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Body Length")
+
+#Since these data are skewed, I am going to try limited the x values with xlim and adjusting the number of bins
+
+hist (dat_delomys$body_length,
+      main = "Histogram of Body Length\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Body Length",
+      xlim = c(0, 200),
+      breaks = 10)
+
+boxplot(body_length ~ sex, data = dat_delomys)
+
+par(mfrow = c(1, 2))
+hist (dat_delomys$body_length,
+      main = "Histogram of Body Length\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Body Length",
+      xlim = c(0, 300),
+      breaks = 20)
+boxplot(body_length ~ sex, data = dat_delomys, 
+        main= "Boxplot of Body Length\nBy Johanna Ravenhurst", 
+        col= "red", alpha.f = .5)
+
+```
+
+
+Histogram examples - from In-Class R Demos and Examples
+https://michaelfrancenelson.github.io/environmental_data/#In-Class_R_Demos_and_Examples
+
+```{r}
+#FANCY HISTOGRAMS
+#You can use the special character \n to insert a line break into a title or axis label.
+#You can use the col argument to specify a color for the bars.
+#You can use the border argument to specify the color of the outlines of the bars.
+#You can use the adjustcolor() function to make a color lighter by specifying an alpha value of less than 1.
+
+
+require(palmerpenguins)
+
+hist(
+  penguins$bill_length_mm,
+  main = "Hist 'o Gram of Bill Length\nBy Mike Nelson",
+  col = 
+    adjustcolor(col = "steelblue", alpha.f = .4),
+  border = "red",
+  xlab = "Bill Length (in mm)")
+
+```
+
+```{r}
+#If a histogram has some very short bins at high values of x, you can truncate the display using the xlim argument. For example, if you had some data stored in a data frame and you wanted to make a histogram of the column called wingspan:
+
+#This doesn’t look great:
+
+hist(
+  dat$wingspan,
+  main = "Histogram of Wingspan",
+  xlab = "wingspan (cm)")
+
+#I can truncate the x-values to be between 0 and 10 using xlim.
+
+#I’ll also make more bins using the breaks argument.
+
+  #Note that R considers the breaks argument to be a suggestion… Telling it to create 30 bins won’t always result in 30 bins. You can experiment with different numbers of bins until you find a number that works for your plot.
+
+hist(
+  dat$wingspan,
+  main = "Histogram of Wingspan",
+  xlab = "wingspan (cm)",
+  xlim = c(0, 10),
+  breaks = 30)
+```
+

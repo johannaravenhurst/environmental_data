@@ -1,0 +1,8 @@
+"0",""
+"0","sample1_tree <- droplevels(subset(dat_tree, treatment != ""control"")) "
+"0","sample2_tree <- droplevels(subset(dat_tree, treatment != ""clipped"")) "
+"0","#Note: I'm guessing there is an easier way to subset the data for each species for the two.boot function, but this is what I could come up with..."
+"0",""
+"0"," boxplot("
+"0","    pine ~ treatment, data = sample1_tree,"
+"0","    ylab = ""Pine"")"

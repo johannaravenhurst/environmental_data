@@ -1,0 +1,4 @@
+"0","rm(list = ls())"
+"0","require(here)"
+"0","rope   = read.csv(here(""data"", ""rope.csv""))"
+"0","head(rope)"

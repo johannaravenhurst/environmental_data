@@ -1,0 +1,16 @@
+"0","png(filename = here(""lab_04_hist_01.png""), width = 1500, height = 1600, res=180)
+par(mfrow = c(2, 2))
+
+hist(norm_17, main = ""Histogram of 17 Random Numbers"", xlab = ""Normally-Distributed Random Numbers"")
+hist(norm_30, main = ""Histogram of 30 Random Numbers"", xlab = ""Normally-Distributed Random Numbers"")
+hist(norm_300, main = ""Histogram of 300 Random Numbers"", xlab = ""Normally-Distributed Random Numbers"")
+hist(norm_3000, main = ""Histogram of 3000 Random Numbers"", xlab = ""Normally-Distributed Random Numbers"")
+
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

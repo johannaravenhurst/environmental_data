@@ -1,0 +1,3 @@
+"0",""
+"0","sim_sample_5 = sample(sim_population, size = 5000, replace = T)"
+"0","hist(sim_sample_5 + 0.00001, main = ""sample size = 5000"", xlab = ""x"")"

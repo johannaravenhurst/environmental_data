@@ -1,0 +1,7 @@
+"0","require(here)"
+"2","Loading required package: here
+"
+"2","here() starts at C:/Users/Johanna Ravenhurst/Documents/environmental_data
+"
+"0","moths = read.csv(here(""data"", ""moths.csv""))"
+"0","head(moths)"

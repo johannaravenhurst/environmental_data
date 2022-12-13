@@ -1,0 +1,76 @@
+"0","install.packages(""palmerpenguins"")
+"
+"2","WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+
+https://cran.rstudio.com/bin/windows/Rtools/
+"
+"2","Installing package into ‘C:/Users/Johanna Ravenhurst/AppData/Local/R/win-library/4.2’
+(as ‘lib’ is unspecified)
+"
+"2","trying URL 'https://cran.rstudio.com/bin/windows/contrib/4.2/palmerpenguins_0.1.1.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 3004898 bytes (2.9 MB)
+"
+"2","downloaded 2.9 MB
+
+"
+"1","package ‘palmerpenguins’ successfully unpacked and MD5 sums checked
+"
+"1","
+"
+"1",""
+"1","The downloaded binary packages are in
+	C:\Users\Johanna Ravenhurst\AppData\Local\Temp\RtmpErhmnz\downloaded_packages"
+"1",""
+"1","
+"
+"0","install.packages(""here"")"
+"2","WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+
+https://cran.rstudio.com/bin/windows/Rtools/
+"
+"2","Installing package into ‘C:/Users/Johanna Ravenhurst/AppData/Local/R/win-library/4.2’
+(as ‘lib’ is unspecified)
+"
+"2","also installing the dependency ‘rprojroot’
+
+"
+"2","trying URL 'https://cran.rstudio.com/bin/windows/contrib/4.2/rprojroot_2.0.3.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 109353 bytes (106 KB)
+"
+"2","downloaded 106 KB
+
+"
+"2","trying URL 'https://cran.rstudio.com/bin/windows/contrib/4.2/here_1.0.1.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 63958 bytes (62 KB)
+"
+"2","downloaded 62 KB
+
+"
+"1","package ‘rprojroot’ successfully unpacked and MD5 sums checked
+"
+"1","package ‘here’ successfully unpacked and MD5 sums checked
+"
+"1","
+"
+"1",""
+"1","The downloaded binary packages are in
+	C:\Users\Johanna Ravenhurst\AppData\Local\Temp\RtmpErhmnz\downloaded_packages"
+"1",""
+"1","
+"
+"0","#Require() and library() do the same thing"
+"0",""
+"0","require(palmerpenguins)"
+"2","Loading required package: palmerpenguins
+"
+"0","require(here)"
+"2","Loading required package: here
+"
+"2","here() starts at C:/Users/Johanna Ravenhurst/Documents/environmental_data
+"

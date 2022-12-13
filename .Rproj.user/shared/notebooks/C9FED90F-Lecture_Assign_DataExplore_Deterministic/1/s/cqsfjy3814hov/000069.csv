@@ -1,0 +1,3 @@
+"0",""
+"0","plot( x = dat_habitat$elev, y = dat_habitat$ba.tot, main = ""Visually-estimated linear model fit\nBasal Area and Elevation"", xlab = ""Elevation"", ylab = ""Total Basal Area"","
+"0","      cex = 0.5)"

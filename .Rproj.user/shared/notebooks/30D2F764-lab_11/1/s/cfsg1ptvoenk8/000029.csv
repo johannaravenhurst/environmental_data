@@ -1,0 +1,4 @@
+"0",""
+"0",""
+"0","# Add a dotted vertical red line at the observed population standard deviation value."
+"0","abline(v = sd_obs, lty = 2, col = 'red')"

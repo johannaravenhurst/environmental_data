@@ -1,0 +1,4 @@
+"0","#Setup and examine dataset"
+"0","require(here)"
+"0","catrate = read.csv(here(""data"", ""catrate.csv""))"
+"0","head(catrate)"

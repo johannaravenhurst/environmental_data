@@ -1,0 +1,7 @@
+"0","plot("
+"0","  density(result_mc),"
+"0","  main = ""Mike's Null Distribution Density Plot"","
+"0","  xlab = ""Slope Coefficient"","
+"0","  xlim = c(-0.05, 0.04),"
+"0","  ylim = c(0, 70),"
+"0","  col= ""black"",lwd=2)"

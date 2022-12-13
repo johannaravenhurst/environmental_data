@@ -1,0 +1,19 @@
+"0","png(filename = here(""lab_05_salam_ricker.png""), width = 800, height = 600, res=180)  
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = ""Ricker Model Salamander\nFirst Time Breeders"", 
+     xlab = ""distance class"", ylab = ""standardized dispersal rate"")
+
+curve(
+  ricker_fun(x, 0.2/100, 1/500), add = TRUE, 
+   col = ""black"", type = ""l"", lty = 2, lwd = 3)
+
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

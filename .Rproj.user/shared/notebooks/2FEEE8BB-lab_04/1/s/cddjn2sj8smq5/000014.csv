@@ -1,0 +1,23 @@
+"0","png(filename = here(""lab_04_random_residuals.png""), width = 1500, height = 600, res=180)
+par(mfrow = c(1, 2))
+hist(dat_random_q9_2$resids,
+     main = ""Residuals for Random Data Model"",
+      col =
+        adjustcolor(col = ""steelblue"", alpha.f =.4),
+      border = ""blue"",
+      xlab = ""Residuals"")
+
+plot(resids ~ y_predicted, data = dat_random_q9_2, pch = 5,
+     main = ""Predicted Values and \nResiduals for Random Data"",
+     col =
+        adjustcolor(col = ""red"", alpha.f =.9),
+      xlab = ""Predicted Values"",
+      ylab = ""Residuals"")
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

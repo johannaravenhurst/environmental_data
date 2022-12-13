@@ -1,0 +1,4 @@
+"0",""
+"0","#with a sample of 20 it doesn't look like it came from a binomially-distributed population"
+"0","sim_sample_2 = sample(sim_population, size = 100, replace = T)"
+"0","hist(sim_sample_2 + 0.00001, main = ""sample size = 100"", xlab = ""x"")"

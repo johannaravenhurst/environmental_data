@@ -1,0 +1,15 @@
+"0","```r
+
+elev_plot <-
+plot(x = dat_habitat$elev, y = dat_habitat$ba.tot, main = \"Basal Area and Elevation\", xlab = \"Elevation\", ylab = \"Total Basal Area\",
+     cex = 0.5)
+
+slope_plot <-
+plot(x = dat_habitat$slope, y = dat_habitat$ba.tot, main = \"Basal Area and Slope\", xlab = \"Slope\", ylab = \"Total Basal Area\",
+     cex = 0.5)
+
+
+aspect_plot <-
+plot(x = dat_habitat$aspect, y = dat_habitat$ba.tot, main = \"Basal Area and Aspect\", xlab = \"Aspect\", ylab = \"Total Basal Area\",
+     cex = 0.5)
+```"

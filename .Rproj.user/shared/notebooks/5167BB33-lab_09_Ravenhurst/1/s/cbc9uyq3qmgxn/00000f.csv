@@ -1,0 +1,8 @@
+"0",""
+"0","plot("
+"0","  density(dat_fl2$DBH_in[dat_fl2$Failure_Standardized == ""whole""]),"
+"0","  main = ""DBH Density Plots"","
+"0","  xlab = ""DBH (in)"","
+"0","  ylab = ""Density"","
+"0","  col= ""black"",lwd=1.5, lty = 1,"
+"0","  ylim = c(0, 0.07))"

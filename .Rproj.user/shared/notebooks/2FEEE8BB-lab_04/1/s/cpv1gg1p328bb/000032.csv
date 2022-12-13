@@ -1,0 +1,60 @@
+"0","n_pts = 5
+n_pts_2 = 5000
+x_min = 1
+x_max = 60
+
+set.seed(20)
+
+# X values are uniformly distributed
+x_random_q9 = rnorm(n = n_pts)
+
+# Y values are normally-distributed.
+# I used the default parameters for mean and sd.
+y_random_q9 = runif(n = n_pts, min = x_min, max = x_max)
+
+dat_random_q9 = data.frame(x = x_random_q9, y = y_random_q9)
+
+plot(y ~ x, data = dat_random_q9, pch = 5,
+     main = ""Random Sample Normal and Uniform"",
+     col =
+        adjustcolor(col = ""green"", alpha.f =.9),
+      xlab = ""Random Normal Sample X"",
+      ylab = ""Random Uniform Sample Y"")
+
+
+x_random_q9_3 = rnorm(n = n_pts_2)
+
+# Y values are normally-distributed.
+# I used the default parameters for mean and sd.
+y_random_q9_3 = runif(n = n_pts_2, min = x_min, max = x_max)
+
+dat_random_q9_3 = data.frame(x = x_random_q9_3, y = y_random_q9_3)
+
+plot(y ~ x, data = dat_random_q9_3, pch = 5,
+     main = ""Random Sample Normal and Uniform"",
+     col =
+        adjustcolor(col = ""green"", alpha.f =.9),
+      xlab = ""Random Normal Sample X"",
+      ylab = ""Random Uniform Sample Y"")
+"
+"0",""
+"0",""
+"0",""
+"0","n_pts = 100"
+"0","y_prob = 0.25"
+"0","y_size = 50"
+"0",""
+"0","set.seed(50)"
+"0",""
+"0","# X and Y values are normally-distributed."
+"0","x_random_q9_2 = rnorm(n = n_pts)"
+"0","y_random_q9_2 = rbinom(n = n_pts, size = y_size, prob = y_prob)"
+"0",""
+"0","dat_random_q9_2 = data.frame(x = x_random_q9_2, y = y_random_q9_2)"
+"0",""
+"0","plot(y ~ x, data = dat_random_q9_2, pch = 5,"
+"0","     main = ""Two Randomly Generated Samples"","
+"0","     col ="
+"0","        adjustcolor(col = ""red"", alpha.f =.9),"
+"0","      xlab = ""Random Normal Sample X"","
+"0","      ylab = ""Random Binomial Sample Y"")"

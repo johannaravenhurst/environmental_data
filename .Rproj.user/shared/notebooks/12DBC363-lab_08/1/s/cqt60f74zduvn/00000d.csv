@@ -1,0 +1,3 @@
+"0"," boxplot("
+"0","    pine ~ treatment, data = sample2_tree,"
+"0","    ylab = ""Pine"")"

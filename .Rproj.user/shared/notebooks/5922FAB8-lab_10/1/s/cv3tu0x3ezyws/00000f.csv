@@ -1,0 +1,2 @@
+"0","ms_among  =  ss_among / (n_groups - 1)"
+"0","ms_within = ss_within / (n_obs - n_groups)"

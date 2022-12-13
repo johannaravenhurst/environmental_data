@@ -1,0 +1,274 @@
+---
+title: "In-Class Likelihoods"
+author: "Johanna Ravenhurst"
+date: "2022-10-31"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+require(here)
+
+dat_bird = read.csv(here::here("data", "bird.sta.csv"))
+dat_habitat = read.csv(here::here("data", "hab.sta.csv"))
+dat_all = merge(dat_bird, dat_habitat)
+```
+
+#Likelihood of 2 Observations Walkthrough (Not included in html output)
+
+
+```{r include = FALSE}
+#Let’s say I’ve been conducting counts of Wilson’s Warblers at study sites in Oregon.
+#I’ve been to 2 sites where I counted 2, and 6 birds.
+
+x_observed = c(2, 6)
+print(x_observed)
+
+#I think I can model the population of birds at the study sites with a Poisson distribution.I know that the Poisson distribution has a single parameter: λ. I also know that the mean and standard deviation of a Poisson distribution are equal to λ
+
+#Choosing a model:
+#I think the count of 2 is unusually low, so I decide to propose a Poisson distribution with λ=4.5 as a model of the counts of Wilson’s Warblers on my study sites.
+
+#I can use dpois() to calculate the probability mass for the two counts given a Poisson distribution with λ=4.5
+dpois(x = 2, lambda = 4.5)
+dpois(x = 6, lambda = 4.5)
+
+#I know the likelihood of observing those particular counts together is the product of the individual likelihoods:
+
+dpois(x = 2, lambda = 4.5) * dpois(x = 6, lambda = 4.5)
+
+#I can take advantage of vectorization in R by storing the counts in a single vector:
+wiwa_counts = c(2, 6)
+dpois(x = wiwa_counts, lambda = 4.5)
+
+#I can more easily calculate the product now:
+prod(dpois(x = wiwa_counts, lambda = 4.5))
+
+#And the sum of log-likelihoods like:
+
+sum(log(dpois(x = wiwa_counts, lambda = 4.5)))
+
+#How would you modify the code to calculate the likelihood using lambda=4.2?
+#I would just replace 4.5 with 4.2
+```
+#Likelihood of Many Observations Walkthrough (Not included in html output)
+
+```{r include=FALSE}
+#Now let’s say I want to find the value of λ that maximizes the likelihood for the counts of Wilson’s Warblers.
+
+dat_bird = read.csv(here::here("data", "bird.sta.csv"))
+dat_habitat = read.csv(here::here("data", "hab.sta.csv"))
+dat_all = merge(dat_bird, dat_habitat)
+
+#Numerical Exploration
+summary(dat_all$WIWA)
+
+#Graphical Exploration
+hist(dat_all$WIWA)
+
+#use breaks to make this look better
+hist(dat_all$WIWA, breaks = 7)
+#this grouped the 0 and 1 observations together, which is not what we wanted. R decided to make 6 bins.
+hist(dat_all$WIWA, breaks = 0:7)
+#This attempt didn't work either.
+#We can trick R into only counting the lower endpoint if we cleverly manipulate the sequence that we give to bins.
+0:7 - 0.5
+hist(dat_all$WIWA, breaks = 0:7 - .5)
+#This works because the data were discrete counts. It also looks nicer because the bars are now centered over the census counts. This trick doesn't work as well for continuous data.
+
+
+#If we wanted to use code like this with data for which we didn’t know the maximum value ahead of time we could write:
+
+par(mfrow = c(1, 2))
+dat = dat_all$WIWA
+hist(dat, breaks = 0:(max(dat) + 1) - 0.5, main = "Histogram of\nWilson's Warbler counts")
+
+dat = dat_all$GRJA
+hist(dat, breaks = 0:(max(dat) + 1) - 0.5, main = "Histogram of\nGray Jay counts")
+
+#I’ll try a Poisson distribution with lambda = 1.0:
+sum(log(dpois(x = dat_all$WIWA, lambda = 1.0)))
+```
+#Questions 1-2
+
+```{r}
+#Consider the likelihood calculation example for 2 observations of Wilson’s Warblers using a Poisson distribution model.Recall the R-code I used in the walkthrough to find the log-likelihood of using λ=4.5
+
+wiwa_counts = c(2, 6)
+dpois(x = wiwa_counts, lambda = 4.5)
+
+## [1] 0.1124786 0.1281201
+
+#As a group, experiment with different values of λ to find a value that maximizes the sum of log-likelihoods of the hypothetical observations. You only need to consider 2 significant figures!
+
+dpois(x = wiwa_counts, lambda = 2:6)
+dpois(x = wiwa_counts, lambda = 2:7 - 0.5)
+
+sum(log(dpois(x = wiwa_counts, lambda = 2)))
+sum(log(dpois(x = wiwa_counts, lambda = 2.5)))
+sum(log(dpois(x = wiwa_counts, lambda = 3)))
+sum(log(dpois(x = wiwa_counts, lambda = 3.5)))
+sum(log(dpois(x = wiwa_counts, lambda = 4)))
+sum(log(dpois(x = wiwa_counts, lambda = 4.5)))
+sum(log(dpois(x = wiwa_counts, lambda = 5)))
+sum(log(dpois(x = wiwa_counts, lambda = 5.5)))
+sum(log(dpois(x = wiwa_counts, lambda = 6)))
+
+#Q1 (1 pt.): What value for λ did you select?
+#I selected λ = 2
+
+#Q2 (1 pt.): How did you choose a value?
+#I calculated the sum of log-likelihoods for the range of possible lambda values and selected the lambda that maximized the sum of log-likelihoods.
+#However, this involved quite a bit of repeated code. I tried providing a vector of lambda values 2:6 and that didn't work. Maybe the way to do this would be to write a function?
+
+```
+#Questions 3-5
+
+```{r}
+#In the walkthrough, I tried using a Poisson distribution with λ=1.0 to model the set of census counts of Wilson’s Warbler. You will create models for the census count of Winter Wrens.
+
+#Numerical Exploration
+summary(dat_all$WIWR)
+
+#Find the λ value of a Poisson model that makes all of the observed the Winter Wren’s census counts most likely.
+
+#Plot a histogram of Winter Wren counts (Check the metadata file to find the abbreviation for Winter Wrens). Make sure you choose an appropriate number of bins for the plot.
+
+#As a group, you’ll be searching for the value of λ that maximizes the sum of log-likelihood. In other words, you’ll find the the model parameter that makes the values of observed wren census counts most likely. Hint: you only need to consider 2 significant figures in your value of λ
+
+sum(log(dpois(x = dat_all$WIWR, lambda = 1)))
+sum(log(dpois(x = dat_all$WIWR, lambda = 2)))
+
+
+#Q3 (1 pt.): Include your histogram into your report.
+
+hist(dat_all$WIWR, breaks = 0:7 - .5,
+     main = "Histogram of Winter Wren Counts",
+     xlab = "Counts of Winter Wren")
+
+#Q4 (1 pt.): What value for λ did you select?
+
+#I looked at the sum of log-likelihood for lambda =1 and lambda=2 (because those had the highest frequency in the histogram) and selected the option that maximized the sum.
+#λ = 1
+
+#Q5 (2 pts.): Show the R code you used to calculate the Poisson log-likelihood for the vector of Winter Wren census counts.
+
+sum(log(dpois(x = dat_all$WIWR, lambda = 1)))
+sum(log(dpois(x = dat_all$WIWR, lambda = 2)))
+
+
+```
+
+#Questions 6-9
+
+```{r}
+
+#Use binomial distribution for the Winter Wrens
+summary(dat_all$WIWR)
+hist_WIWR <- hist(dat_all$WIWR, breaks = 0:7 - .5,
+     main = "Histogram of Winter Wren Counts",
+     xlab = "Counts of Winter Wren")
+str(hist_WIWR)
+
+#Q6 (1 pt.): What are the two parameters for a binomial distribution and what do they represent?
+#n= number of trials
+#p = probability of success of each trial
+
+
+#Q7 (2 pts.): What were the parameter values you selected?
+n_binom = 1046
+#we found at least 1 bird in 840 sites
+p_binom = 840/1046
+
+
+#Q8 (1 pt.): How did you choose a value for n?
+str(summary(dat_all$WIWR)) #1046 observations
+#I found the total number of sample sites and called that n
+
+
+#Q9 (2 pts.): Show R code you used to calculate the binomial log-likelihood for the vector of Winter Wren census counts.
+n_binom = 1046
+p_binom = 840/1046
+sum(log(dbinom(x = dat_all$WIWR, n_binom, p_binom)))
+
+```
+
+#Questions 10-11
+
+Q10 (1 pt.): Considering a Maximum Likelihood criterion, which model better fit the data?
+Maximum Likelihood is looking for the maximum sum of log-likelihoods, so the Poisson model did a better job because the value of the sum was higher. 
+
+
+Q11 (2 pts.): Considering what you know about the Binomial and Poisson distributions, which model is more appropriate for census count data?
+
+The Poisson distribution is more appropriate for census count data because it is a discrete distribution meant to describe counts. The sample space goes from 0 to infinity.
+
+
+#Questions 12-14
+
+```{r}
+#Consider a vector of random, normally-distributed numbers:
+
+#We know that the numbers came from a normally-distributed population with mean 0 and standard deviation 1.
+#How could I calculate the log-likelihood that the observed numbers in the vector came from a standard normal distribution?
+
+#Q12 (1 pt.): Create the vector (make sure you set seed to 1) and calculate the log likelihood that it came from a standard normal distribution.
+
+set.seed(1)
+vec_rnorm = rnorm(n = 10, mean = 0, sd = 1)
+
+sum(log(dnorm(x = vec_rnorm, mean = 0, sd = 1)))
+#Answer = -12.01869
+
+#Q13 (2 pts.): Show the R code you used to make the calculation
+set.seed(1)
+vec_rnorm = rnorm(n = 10, mean = 0, sd = 1)
+
+sum(log(dnorm(x = vec_rnorm, mean = 0, sd = 1)))
+
+
+
+#Q14 (2 pts.): Use the guess and check method to find the maximum likelihood optimal values for mean and standard deviation (to 2 significant figures) of the numbers in the vector.
+summary(vec_rnorm)
+
+sum(log(dnorm(x = vec_rnorm, mean = 0.13, sd = 1)))
+
+
+
+```
+
+#Questions 15-16
+
+```{r}
+#Palmer penguins dataset. Assume data for flipper length are normally-distributed.
+require(palmerpenguins)
+head(penguins)
+
+hist(
+  penguins$flipper_length_mm,
+  main = "Histogram of Penguin Flipper Length",
+  xlab = "Flipper Length (mm)")
+
+
+mean(penguins$flipper_length_mm, na.rm = TRUE)
+sd(penguins$flipper_length_mm, na.rm = TRUE) 
+#na.rm removes the NA values before computation, otherwise answer is just NA
+nrow(penguins)
+
+#Determine maximum likelihood estimates for mean and standard deviation of a normal distribution that best describes the flipper lengths.
+
+sum(log(dnorm(x = penguins$flipper_length_mm, mean = 200, sd = 14)), na.rm=FALSE)
+
+#I'm not sure what I am doing wrong here...I keep getting "NA"
+
+#Q15 (1 pt.): How did you choose your starting guess values for mean and standard deviation?
+#I calculated the mean and standard deviation from the full dataset to choose my starting values.
+
+
+#Q16 (2 pts.): Using the guess and check method, what were the maximum likelihood estimates of mean and standard deviation (to 1 significant figure).
+
+
+```
+
+

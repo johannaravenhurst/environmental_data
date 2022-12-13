@@ -1,0 +1,13 @@
+"0","```r
+names(dat_habitat)
+```"
+"1"," [1] \"basin\"    \"sub\"      \"sta\"      \"lat\"      \"long\"     \"elev\"     \"slope\"    \"aspect\"  
+ [9] \"s.id\"     \"s.edge\"   \"p.edge\"   \"p.edge.1\" \"p.cwedge\" \"ba.con\"   \"ba.hard\"  \"ba.snag\" 
+[17] \"ba.tot\"   \"ba.ratio\" \"snag.sml\" \"snag.ml\"  \"snag.l\"   \"snag.dc1\" \"snag.dc2\" \"snag.dc4\"
+"
+"0","```r
+#If needed: reality check to see if file exists in directory
+file.exists(here(\"data\", \"hab.sta.csv\"))
+```"
+"1","[1] TRUE
+"

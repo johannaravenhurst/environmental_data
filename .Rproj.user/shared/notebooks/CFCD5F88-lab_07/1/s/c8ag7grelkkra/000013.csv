@@ -1,0 +1,6 @@
+"0",""
+"0","#Step 1 - set up bootstrap"
+"0",""
+"0","#remove first column of data with arbitrary site id"
+"0","moth_dat = moths[,-1]"
+"0","head(moth_dat)"

@@ -1,0 +1,684 @@
+---
+title: 'Lab 09: Modeling Data 2'
+author: "Johanna Ravenhurst"
+date: "2022-11-27"
+output: html_document
+---
+I didn't work with other students
+```{r}
+#Setup code, read in dataset
+require(here)
+catrate = read.csv(here("data", "catrate.csv"))
+head(catrate)
+```
+# Binomial Test for Proportions
+An alternative test for ratios is the binomial test, which is suitable for data consisting of a set of single trials in which each observation can take on one of two values; e.g., success or fail, present or absent, live or die.
+
+```{r include = FALSE}
+#How likely is 33 reproductive successes out of 61 total trials if reproductive success/failure are equally likely (Pr(success) = 0.5)?
+
+n_success = sum(catrate$success)
+n_years = sum(catrate$years)
+binom.test(
+  x = n_success,
+  n = n_years,
+  p = 0.5)
+
+#Which argument would we change if we wanted to test whether the catastrophic rate was different than 20%? - change to p=0.2
+```
+# Reproductive Catastrophe and Late Filling
+
+```{r include = FALSE}
+late_fill_rate = 2/7
+normal_fill_rate = 1 - late_fill_rate
+
+#Null Hypothesis = reproductive success is the same as the normal-filling rate
+#Alternative Hypothesis = reproductive success is more or less frequent than the normal-filling rate
+binom.test(
+  x = n_success,
+  n = n_years,
+  p = normal_fill_rate) 
+
+```
+
+```{r include = FALSE}
+#Null Hypothesis = reproductive success is the same as the normal-filling rate
+#Alternative Hypothesis = reproductive success is less frequent than the normal-filling rate
+binom.test(
+  x = n_success,
+  n = n_years,
+  p = normal_fill_rate,
+  alternative ='less') 
+```
+*What do these binomial tests say about the success (or catastrophe) rate?*
+The first binomial test indicates that we have evidence to reject the null hypothesis that the reproductive success is the same as the normal-filling rate. The second binomial test also indicates that we can reject the null hypothesis, this time also rejecting that the reproductive success is higher than the normal-filling rate. 
+
+
+
+*Do these results agree with the Student’s t test and/or Wilcoxon’s signed rank test?*
+
+```{r include = FALSE}
+t.test(catrate$cat.rate, mu = 2/7)
+```
+Yes, the results agree with the Student's t test. The null hypothesis for the t-test is that the catastrophe rate is equal to the late pond-filling rate. The results show that we have evidence to reject this null hypothesis. The reproductive success of salamanders is not completely explained by the filling rate of the ponds. 
+
+
+*Which test do think is most appropriate? Why?*
+The binomial tests are more appropriate because the data is based on reproductive success or failure and isn't really a continuous variable. 
+
+# Two Sample Tests
+ To summarize, we can use classical two-sample tests to:
+
+    compare two variances
+    compare two sample means or medians
+    check the correlation of two variables
+    compare two (or more) proportions
+    test for independence of two variables in a contingency table
+
+# Fisher's F test - test whether sample variances are significantly different
+It is based on the idea that if the variances of the two samples are the same, then the ratio of the variances will be close to 1.
+
+```{r include = FALSE}
+veg = read.csv(here("data", "vegdata.csv"))
+head(veg)
+boxplot(pine ~ treatment, data = veg)
+```
+# Test variance in pine seedling count between control and clipped
+
+```{r include = FALSE}
+veg2 = droplevels(
+  subset(
+    veg,
+    treatment %in% c('control','clipped')
+  ))
+
+# verify that treatment is factorized
+veg2$treatment = factor(veg2$treatment)
+
+var.test(
+  pine ~ treatment,
+  data = veg2)
+
+#Result - we have significant evidence that the variances are not equal, reject null hypothesis
+
+```
+# F-tests assume normality - test for normality
+
+```{r include = FALSE}
+shapiro.test(veg2$pine[veg2$treatment=="control"])
+shapiro.test(veg2$pine[veg2$treatment=="clipped"])
+
+#The control group is normally distributed - fail to reject the null
+#The clipped group is borderline - technically the p-value is less than 0.05, but just barely. 
+```
+# If the data are non-normal per the Shapiro test results, use a non-parametric test of homogeniety of variances - like the Fligner-Killeen test:
+
+```{r include = FALSE}
+fligner.test(
+  pine ~ treatment,
+  data = veg2)
+
+#The null hypothesis is that the variances are equal. We reject the null hypothesis based on the p-value <0.05. 
+```
+# Bartlett's Test -  Test for multiple variances - compare variances for all 4 treatment groups
+
+```{r include = FALSE}
+bartlett.test(pine ~ treatment, data = veg)
+
+#Results - reject null hypothesis that the variances among the 4 groups are equal
+#Note - this test is sensitive to non-normality and outliers
+
+#Try the Filgner-Killeen test as a non-parametric alternative
+fligner.test(pine ~ treatment, data = veg)
+```
+Do the results agree with Bartlett’s test?
+Yes, the results agree. 
+
+What do you notice about p-values when we use parametric vs. non-parametric tests?
+The non-parametric test p-values are higher.
+
+Can you see why using parametric tests when the assumptions are not met might lead to incorrect conclusions about significance?
+Yes, using the parametric tests when the assumptions of equal variance and normality are not met could lead us to conclude that we have significant evidence to reject the null hypothesis when in fact we don't. 
+
+# T-test - comparing the means
+The Student’s t test is appropriate when the samples are independent, the variances constant, and the errors normally distributed. 
+
+```{r include = FALSE}
+t.test(
+  pine ~ treatment,
+  data = veg2)
+
+#The CI includes 0 - the sample means are not significantly different
+#The t-test results indicate that there is not a significant difference in the mean pine seedling counts between the control and clipped treatments
+#There is a large difference in sample means...and we know that the assumptions we need for a t-test are not met in this case because the variances are difference and the clipped sample is not normally distributed. 
+```
+# Wilcox test to compare the means 
+*samples are independent but errors aren't normally distributed*
+
+```{r include = FALSE}
+wilcox.test(
+  pine ~ treatment,
+  data = veg2)
+
+#These results also indicate that we should not reject the null hypothesis (high p-value) - I have more confidence in this test result because our data doesn't meet the assumption of normality. 
+```
+# Paired Samples
+
+```{r include = FALSE}
+#Example data from mice body mass before and after treatment
+#install.packages("datarium")
+require(datarium)
+data("mice2")
+head(mice2)
+```
+
+```{r include = FALSE}
+t.test(mice2$before, mice2$after, paired = TRUE)
+
+shapiro.test(mice2$before)
+shapiro.test(mice2$after)
+
+wilcox.test(
+  mice2$before, mice2$after, paired = TRUE,
+  data = mice2)
+
+```
+
+Compare the p-values of the parametric and nonparametric tests.
+
+    Which was higher? - the p-value from the nonparametric test
+    Did your overall conclusion change? - no, overall conclusion is that we reject the null hypothesis of true differences in means equal to 0. 
+    
+# Compare to results of unpaired test
+
+Paired tests make additional assumptions about the data (observations are meaningfully paired) - so if we aren't sure the data are paired, use an unpaired test
+
+```{r include = FALSE}
+t.test(mice2$before, mice2$after, paired = FALSE)
+```
+# Correlation
+
+```{r include = FALSE}
+disp = read.csv(here("data", "dispersal.csv"))
+disp
+
+plot(
+  disp.rate.ftb ~ disp.rate.eb,
+  data = disp,
+  main = "Marbled Salamander Dispersal Rates",
+  xlab = "Dispersal Rate\nFirst Time Breeders",
+  ylab = "Dispersal Rate\nExperienced Breeders",
+  pch = 21, col = 1, bg = "steelblue"
+)
+```
+
+```{r include = FALSE}
+#test significance of the correlation
+
+cor.test(
+  disp$disp.rate.ftb,
+  disp$disp.rate.eb,
+  use='complete.obs')
+
+#High p-value - don't reject the null hypothesis. No significant evidence to say that the true correlation isn't 0. 
+```
+If the data are non-normal, then a non-parametric rank-based measure of association is more appropriate.
+
+If method is “kendall” or “spearman”, Kendall’s tau or Spearman’s rho statistic is used to estimate a rank-based measure of association
+
+These tests may be used if the data do not necessarily come from a bivariate normal distribution.
+
+```{r include = FALSE}
+cor.test(
+  disp$disp.rate.ftb,
+  disp$disp.rate.eb,
+  use='complete.obs',
+  method='spearman')
+```
+What does this test say about the correlation between dispersal-distance functions? 
+This test has a p-value less than 0.05, so we have evidence to reject the null hypothesis of zero correlation between these two variables. 
+
+Does it agree with the parametric test? 
+No
+
+Which do you trust more with this data set?
+The Shapiro test (below) indicates that these data are not normally distributed, so I trust the non-parametric test results in this case. 
+
+```{r include = FALSE}
+shapiro.test(disp$disp.rate.ftb)
+shapiro.test(disp$disp.rate.eb)
+```
+#  Kolmogorov-Smirnov test - comparing two distributions
+ Kolmogorov-Smirnov test, which is an extremely simple test for asking one of two different questions:
+
+1. Are two sample distributions the same, or are they significantly different from one another in one or more (unspecified) ways?
+#two distributions with exactly the same mean could be significantly different if they differed in variance, or in skew or kurtosis, or both.
+2. Does a particular sample distribution arise from a particular hypothesized theoretical distribution?
+
+The Kolmogorov-Smirnov test works on empirical cumulative distribution functions (ecdf).- Recall that these give the probability that a randomly selected value of X is less than or equal to x.
+
+```{r include = FALSE}
+plot(
+  ecdf(disp$disp.rate.ftb),
+  verticals=TRUE,
+  main = "Mike's Plot of Marbled Salamanders\nFirst-Time Breeders: ECDF")
+```
+
+```{r include = FALSE}
+plot(
+  ecdf(disp$disp.rate.ftb),
+  verticals=TRUE,
+    main = "Mike's Plot of Marbled Salamanders\nFirst-Time and Experienced Breeders: ECDF")
+plot(
+  ecdf(disp$disp.rate.eb),
+  verticals=TRUE,
+  lty=3,
+  add=TRUE)
+legend(
+  x = 0.4, y = 0.4,
+  lty = c(1, 3),
+  legend = c("first-time", "experienced"),
+  title = "Breeder Class")
+```
+#Use the Kolmogorov-Smirnov test to determine if these distributions are significantly different in mean, variance, or skew/kurtosis
+Test statistic = max difference in value of cumulative distribution functions (max vertical difference in the curves fr a given value of x)
+
+```{r include = FALSE}
+ks.test(disp$disp.rate.ftb,disp$disp.rate.eb)
+```
+Is there enough evidence to suggest that the dispersal-distance relationship differs between first-time breeders and experienced breeders? - No
+
+# Comparing two or more proportions - Sex-linked killing example
+
+    This is a simple binomial proportions test, which we can easily do in R by specifying two vectors:
+
+    the number of mortalities for females and males c(4,16)
+    the total number of female and male candidates: c(40,250)
+
+```{r include = FALSE}
+prop.test(
+  x = c(4,16),
+  n = c(40,250))
+```
+The p-value is not significant, so we don't have evidence to reject the null hypothesis that the proportions are statistically different
+
+Prop 1 is slightly larger than prop 2, so females do suffer a higher mortality rate.
+
+How would the result change (p-value) if the sample size was doubled but the proportions killed remained the same (i.e., 8 out of 80 females and 32 out of 500 males)?
+
+The p-value is smaller (roughly by half) because of the larger sample size. 
+ 
+```{r include = FALSE}
+prop.test(
+  x = c(8,32),
+  n = c(80,500))
+```
+# 2x2 Contingency Table - Chi-Square Test
+The important question is whether the expected frequencies are significantly different from the observed frequencies.
+
+```{r include = FALSE}
+owls = matrix(c(16, 9, 4, 11), nrow=2)
+rownames(owls) = c("present", "absent")
+colnames(owls) = c("old", "young")
+chisq_owls = chisq.test(owls)
+chisq_owls
+```
+What does the result indicate?
+
+    Are barred owls present more frequently than expected in old forest stands?
+    It’s a little difficult to tell from just the p-value. - it is equal to 0.05, so we could saw we have evidence to reject the null hypothesis. But we don't know if they are present more or less frequently. 
+    
+```{r include = FALSE}
+#Expected values
+round(chisq_owls$expected, 1)
+
+#Observed values
+chisq_owls$observed
+
+#Were there more, or fewer, than expected owls observed in the young forests? - fewer
+
+#Compare the residuals, or the difference between the observed and expected values
+round(
+  chisq_owls$observed - chisq_owls$expected,
+  digits = 1)
+
+#Negative value indicates fewer owls present in the young forests than expected
+```
+# Fisher's Exact Test if cell values small
+small expected values inflate the value of the test statistic, and it can no longer be assumed to follow the chi-square distribution
+
+```{r include = FALSE}
+fisher.test(owls)
+
+#The conclusion is the same
+```
+
+
+# **Lab Questions**
+
+**Questions 1-2 Chi-square tests 1**
+
+Q1 - *State the null hypothesis of the Chi-square test*
+Null hypothesis: On average, Brown Creepers are present with the same frequency in the edge and interior habitats. 
+
+```{r}
+birds   = read.csv(here("data", "bird.sta.csv"))
+hab     = read.csv(here("data", "hab.sta.csv"))
+birdhab = merge(
+  birds,
+  hab, by=c("basin", "sub", "sta"))
+
+# Create a contingency table for edge/interior and brown creeper presence/absence
+table(
+  birdhab$s.edge,
+  birdhab$BRCR > 0)
+
+# set the presence to be in the first column
+br_creeper_table = table(
+  birdhab$s.edge, 
+  birdhab$BRCR > 0)[, 2:1]
+
+br_creeper_table
+
+#Are brown creepers present more or less frequently than expected in forest interiors versus forest edges and is the difference significant?
+
+rownames(br_creeper_table) = c("Edge", "Interior")
+colnames(br_creeper_table) = c("Present", "Absent")
+br_creeper_table
+chisq_creeper = chisq.test(br_creeper_table)
+chisq_creeper
+
+#Expected values
+round(chisq_creeper$expected, 1)
+
+#Observed values
+chisq_creeper$observed
+
+#Compare the residuals, or the difference between the observed and expected values
+round(
+  chisq_creeper$observed - chisq_creeper$expected,
+  digits = 1)
+
+```
+Q2 - *Consider the results of your test and explain whether you think that Brown Creepers show a significant habitat preference.*
+The Chi-square test resulted in a p-value less than 0.001, indicating that we have significant evidence to reject the null hypothesis that there is no difference in Brown Creeper presence/absence when comparing edge and interior habitats. The Chi-Square test indicates that there is evidence of a habitat preference, but does not give us information about which habitat is preferred.
+In order to investigate which habitat was preferred by the Brown Creepers, I compared the expected and observed frequencies from the Chi square results. The third table in the output is the residuals, or the difference in frequency between expected and observed. This shows that the Brown Creepers showed a preference for the interior habitats, with a negative residual for edge forest presence and a positive residual for interior forest presence, showing 27.7 more Brown Creepers present in the interior habitats than expected. 
+    
+**Questions 3-5 Building Models for ANOVA**
+
+```{r}
+require(palmerpenguins)
+#head(penguins)
+
+#Q3 - Show the R-code you can use to create a model fit (call it fit_species) of penguin body mass as predicted by penguin species.
+fit_species = 
+  lm(
+    formula = body_mass_g ~ species,
+    data = penguins)
+
+
+#Q4 - Show the R-code you can use to create a model fit (call it fit_sex) of penguin body mass as predicted by sex.
+fit_sex= 
+  lm(
+    formula = body_mass_g ~ sex,
+    data = penguins)
+
+
+
+#Q5 - Show the R-code you can use to create a model fit (call it fit_both) of penguin body mass as predicted by species and sex. This should be an interactive model, i.e.it should include a sex and species interaction.
+fit_both= 
+  lm(
+    formula = body_mass_g ~ species * sex,
+    data = penguins)
+
+```
+**Questions 6-9 Homogeneity Assumption: Graphical**
+
+```{r}
+#Q6 - Include a conditional boxplot corresponding to the grouping structure in your fit_species model.
+ boxplot(
+    body_mass_g ~ species, data = penguins,
+    main = "Body Mass of Penguins by Species",
+    ylab = "body mass(g)",
+    xlab = "species")
+
+
+#Q7 - Include a conditional boxplot corresponding to the grouping structure in your fit_sex model.
+ boxplot(
+    body_mass_g ~ sex, data = penguins,
+    main = "Body Mass of Penguins by Sex",
+    ylab = "body mass(g)",
+    xlab = "sex")
+
+#Q8 - Include a conditional boxplot corresponding to the grouping structure in your fit_both model. Your group labels must all correspond to the correct box, be visible, and sensible.
+ 
+ boxplot(
+    body_mass_g ~ sex:species, data = penguins,
+    main = "Body Mass of Penguins by Sex and Species",
+    ylab = "body mass(g)",
+    xlab = NULL,
+    names = c("Adelie\nFemale","Adelie\nMale", "Chinstrap\nFemale", "Chinstrap\nMale", "Gentoo\nFemale", "Gentoo\nMale"),
+    las=2)
+
+```
+
+Q9 - *Based on the shapes of the boxes, which of the models (if any) do you think may have problems fulfilling the homogeneity assumption?*
+The fit_species model might not fit the homogeneity assumption because it looks like the Adelie and Gentoo boxes are wider than the Chinstrap box, indicating that those two species might have more variance. 
+The fit_sex model looks like it should fulfill the homogeneity assumption, since the boxes look relatively similar in terms of width.
+The fit_both model might have some issues with unequal variance between the groups, since some of the boxes look a bit wider than the rest (Male Adelie is an example).
+
+
+**Questions 10-12 Homogeneity Assumption: Bartlett Test 1**
+
+Q10 - *State the null hypothesis of the Bartlett test.*
+Null hypothesis = The variance in each group is equal to the variance in the other groups. 
+
+```{r}
+bartlett.test(body_mass_g ~ species, data = penguins)
+```
+Q11 - *What was the p-value from the Bartlett test of homogeneity for observations grouped by species? You can round your answer to 4 decimal digits.*
+P-value = 0.0501
+
+
+```{r}
+bartlett.test(body_mass_g ~ sex, data = penguins)
+```
+
+Q12 - *What was the p-value from the Bartlett test of homogeneity for observations grouped by sex? You can round your answer to 4 decimal digits.*
+p-value = 0.0319
+
+**Questions 13-14 Homogeneity Assumption: Bartlett Test 2**
+
+```{r}
+dat_groups = aggregate(
+  body_mass_g ~ sex:species,
+  data = penguins,
+  FUN = c)
+str(dat_groups)
+
+bartlett.test(dat_groups$body_mass_g, data = penguins)
+```
+
+Q13 - *What was the p-value from the Bartlett test of homogeneity for observations grouped by both factors? You can round your answer to 4 decimal digits.*
+p-value = 0.1741
+
+
+Q14 - *Based on the results of the Bartlett tests, do you anticipate any issues with heterogeneity in any of the models? Make sure you justify your response with the results of your tests.*
+The Bartlett test result for the fit_species model was a p-value of 0.0501, which is a borderline result but we could decide not to reject the null hypothesis of homogeneity of variance based on the p-value of 0.05. 
+The Bartlett test result for the fit_sex model was a p-value of 0.0319, which indicates that we have significant evidence to reject the null hypothesis of homogeneity between male and female penguins. This is an issue because these data don't satisfy the assumption of constant variance.
+The Bartlett test result for the fit_both model was a p-value of 0.1741, which indicates that we should not reject the null hypothesis of homogeneity. 
+
+**Question 15 - Florida Trees**
+
+```{r}
+dat_fl = read.csv(here("data", "trees_FL.csv"))
+#head(dat_fl)
+#str(dat_fl)
+#summary(dat_fl)
+```
+
+Q15 - *Perform a graphical exploration of the dataset. Create the following plots and include them in your report. You may create separate figures, or combine them into one multi-panel figure.*
+
+```{r}
+#A barplot of counts of trees in each probability of failure class (column ProbabilityofFailure.
+tree_count_probfail = table(dat_fl$ProbabilityofFailure)
+tree_count_probfail 
+barplot(
+  tree_count_probfail,
+  main = "Number of Trees with Each\nProbability of Failure",
+  xlab = "Probability of Failure\n 1 = low, 4 = high",
+  ylab = "Tree Count")
+
+#A barplot of the counts of trees in each of the failure classes (column Failure_Standardized)
+tree_count_fail = table(dat_fl$Failure_Standardized)[c(2, 1, 3)]
+tree_count_fail
+barplot(
+  tree_count_fail,
+  main = "Number of Trees in Each\nClass of Failure",
+  xlab = "Class of Failure",
+  ylab = "Tree Count",
+  ylim = c(0,2500))
+
+#A histogram of DBH
+hist(
+  dat_fl$DBH_in,
+  main = "Histogram of Tree Diameter at Breast Height",
+  xlab = "Diameter at breast height (in)\n(DBH)",
+  ylim = c(0,1000))
+
+
+#Scatterplot of DBH (x-axis) and tree height (y axis)
+plot(
+  HeighttoTop_ft ~ DBH_in,
+  data = dat_fl,
+  main = "Tree Height by DBH",
+  xlab = "Diameter at breast height (in)\n(DBH)",
+  ylab = "Tree Height (ft)",
+  pch = 21, col = 1, bg = "steelblue",
+  ylim = c(0,80)
+)
+```
+
+**Question 16-17 - Florida Trees: Compare Distributions**
+
+Q16 - *State the null hypothesis for the Kolmogorov-Smirnov test. Your answer should be in terms of the DBH of the two groups of trees.*
+Null hypothesis - The DBH sample distributions are the same for trees in the whole failure and intact tree classes. 
+
+```{r}
+#HINT: It may be convenient to create subsets of the FL tree data, one each for the none and whole failure types.
+dat_fl2 = droplevels(
+  subset(
+    dat_fl,
+    Failure_Standardized %in% c('whole','none')
+  ))
+
+# verify that failure class is factorized
+dat_fl2$Failure_Standardized = factor(dat_fl2$Failure_Standardized)
+summary(dat_fl2$Failure_Standardized)
+
+#Note: I realized after doing all of this that I probably could have just used the original dataset since I figured out how to select certain levels of a variable within the code by looking at some walkthrough examples
+
+ks.test(dat_fl2$DBH_in[dat_fl2$Failure_Standardized == "none"], dat_fl2$DBH_in[dat_fl2$Failure_Standardized == "whole"])
+
+```
+Q17 - *What was the p-value of the test? Based on the evidence, do you think the distribution of DBH is the same for the two groups?*
+
+P-value = 0.0213
+This p-value is less than 0.05, so we have significant evidence to reject the null hypothesis that the distribution of DBH is the same for the whole failure trees and the intact trees. I think the distribution of DBH for the two groups is different based on the results of this test. 
+
+
+```{r}
+
+plot(
+  density(dat_fl2$DBH_in[dat_fl2$Failure_Standardized == "whole"]),
+  main = "DBH Density Plots",
+  xlab = "DBH (in)",
+  ylab = "Density",
+  col= "black",lwd=1.5, lty = 1,
+  ylim = c(0, 0.07))
+
+lines(
+  density(dat_fl$DBH_in[dat_fl$Failure_Standardized == "branch"]),
+  col = "black", lwd=1.5, lty = 2)
+
+lines(
+  density(dat_fl2$DBH_in[dat_fl2$Failure_Standardized == "none"]),
+  col = "black", lwd=1.5, lty = 3)
+
+legend(
+  x="topright",
+  bty="o",
+  title = "Failure Type",
+  legend=c('Whole', 'Branch', 'None'),
+  lty=c(1, 2, 3), lwd=1.5)
+```
+
+**Questions 18-20 - Florida Trees: Correlations**
+
+
+Q18 - *Qualitatively describe the shape of the relationship between DBH and height. Is it linear? Curved? Monotonic?*
+
+The shape is curved and monotonically increasing. It also looks like the variance in tree height from the mean increases with increasing values of DBH.  
+
+
+Q19 - *Given your answer to the previous question, which type of correlation coefficient is most appropriate?*
+Spearman and Pearson correlations can both be used for monotonic functions. I think Spearman is more appropriate for these data because it is a non-parametric measure of association that is more forgiving of violations of our standard assumptions.
+
+```{r}
+cor.test(
+  dat_fl$DBH_in,
+  dat_fl$HeighttoTop_ft,
+  use='complete.obs',
+  method='spearman')
+```
+
+Q20 - *What is the p-value? Do you conclude that the two variables are significantly correlated?*
+p-value < 2.2e-16, or less than 0.0001
+Yes, I conclude that we have significant evidence to reject the null hypothesis of no correlation between DPH and tree height. The rho value is 0.885, which indicates strong positive correlation because it is close to 1. 
+
+
+**Questions 21-25 - Florida Trees: Risk Rating**
+
+```{r}
+dat_fl$fail = factor(dat_fl$Failure_Standardized != "none")
+
+levels(dat_fl$fail) = c("No Fail", "Fail")
+
+fl_table_2 = table(
+  dat_fl$ProbabilityofFailure,
+  dat_fl$fail)
+fl_table_2
+
+```
+```{r}
+#Chi-square test and residuals
+chisq_fail = chisq.test(fl_table_2)
+chisq_fail
+
+#Expected values
+round(chisq_fail$expected, 1)
+
+#Observed values
+chisq_fail$observed
+
+#Compare the residuals, or the difference between the observed and expected values
+round(
+  chisq_fail$observed - chisq_fail$expected,
+  digits = 1)
+```
+Q21 - *What was the value of the test statistic (X-squared)? What was the corresponding p-value?*
+X-squared = 202.65
+p-value < 2.2e-16, or less than 0.0001
+
+Q22 - *What is the value of the chi-square residual (rounded to the nearest whole number) for the count of failures in probability category 1?*
+-136
+
+Q23 - *Were there more, or fewer, tree failures than expected by chance in failure probability category #1?*
+Fewer
+
+Q24 - *Were there more, or fewer, tree failures than expected by chance in failure probability category #4?*
+More
+
+
+Q25 - *Given your answers to the previous two questions, do you conclude that the probability of failure rating system is effective?*
+Yes, it seems like the failure rating system is effective at predicting which trees are more likely to fail. 

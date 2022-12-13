@@ -1,0 +1,6 @@
+"0","sum(log(dnorm(x = penguins$flipper_length_mm, mean = 200, sd = 14)), na.rm=FALSE)
+"
+"1","[1]"
+"1"," NA"
+"1","
+"

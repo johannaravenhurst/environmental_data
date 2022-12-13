@@ -1,0 +1,87 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(here)
+
+dat_bird <- read.csv(here("data", "bird.sta.csv"))
+dat_habitat <- read.csv(here("data", "hab.sta.csv"))
+
+head(dat_bird)
+head(dat_habitat)
+
+names(dat_bird)
+names(dat_habitat)
+
+```
+
+Pair Plot - Habitat
+
+```{r}
+
+
+pairs(dat_habitat[, c("elev", "slope", "ba.tot", "ba.con", "ba.hard", "ba.snag")])
+
+pairs(dat_habitat[, c("elev", "ba.con", "ba.hard", "ba.snag", "ba.tot")], main = "PairPlot of Elevation and Basal Area of Trees")
+
+require(here)
+png(filename = here("inclass_habitat_pairplot.png"), width = 800, height = 600)
+pairs(dat_habitat[, c("elev", "ba.con", "ba.hard", "ba.snag", "ba.tot")], main = "PairPlot of Elevation and Basal Area of Trees")
+
+dev.off()
+```
+
+Histogram
+
+```{r}
+
+#use  to see total for each bird species: 
+apply(dat_bird[, -c(1, 2, 3)], 2, sum)
+
+png(filename = here("inclass_SWTH_histogram.png"), width = 800, height = 600)
+SWTH_hist <-
+hist(dat_bird$SWTH, 
+     main = "Corner Table_Bird Species", 
+     xlab = "Number of Swainson Thrush birds observed", 
+     ylab = "Frequency", 
+     col = "yellow",
+     )
+dev.off()
+SWTH_hist
+
+
+
+
+hist (dat_bird$b.rich,
+      main = "Histogram of Species Richness per Station\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Species Richness")
+
+hist (dat_bird$b.sidi,
+      main = "Histogram of Simpsons Diversity Index\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Simpson’s diversity index",
+      breaks = 20)
+
+
+#Since these data are skewed, I am going to try limited the x values with xlim and adjusting the number of bins
+
+hist (dat_delomys$body_length,
+      main = "Histogram of Body Length\nBy Johanna Ravenhurst",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Body Length",
+      xlim = c(0, 200),
+      breaks = 10)
+
+
+```
+

@@ -1,0 +1,9 @@
+"0","coplot(body_mass_g ~ bill_depth_mm | year, data = penguins, rows=1)
+"
+"1","
+"
+"1"," "
+"1","Missing rows: 4, 272"
+"1"," "
+"1","
+"

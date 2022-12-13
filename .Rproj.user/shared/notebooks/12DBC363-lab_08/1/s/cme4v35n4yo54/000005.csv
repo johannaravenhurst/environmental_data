@@ -1,0 +1,8 @@
+"0",""
+"0","#What do you notice about the data?"
+"0","#There are more pine seedlings in the clipped treatment and there is a large range of numbers of pine for that treatment. The other three groups have a narrow range of numbers of pine seedlings and much fewer seedlings in general."
+"0",""
+"0","#Use subset to create a new data frame with only clipped or control treatments"
+"0","dat_tree = droplevels(subset(veg, treatment %in% c(""control"", ""clipped"")))"
+"0",""
+"0","boxplot(pine ~ treatment, dat = dat_tree)"

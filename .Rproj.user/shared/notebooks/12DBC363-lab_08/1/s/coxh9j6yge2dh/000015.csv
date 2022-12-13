@@ -1,0 +1,8 @@
+"0",""
+"0","#Q9 (2 pts.): What was the p-value? Show the R-code you used to find out."
+"0","#p-value = 0.05"
+"0",""
+"0","#Use subset to create a new data frame with only clipped or control treatments"
+"0","dat_tree = droplevels(subset(veg, treatment %in% c(""control"", ""clipped"")))"
+"0",""
+"0","boxplot(pine ~ treatment, dat = dat_tree)"

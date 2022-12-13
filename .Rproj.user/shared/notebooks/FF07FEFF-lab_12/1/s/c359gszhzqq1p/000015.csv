@@ -1,0 +1,4 @@
+"0",""
+"0","curve("
+"0","  ricker_fun(x, 0.2/100, 1/500), add = TRUE, "
+"0","   col = ""black"", type = ""l"", lty = 2, lwd = 3)"

@@ -1,0 +1,133 @@
+---
+title: "Lab 2 R Fundamentals 2"
+author: "Johanna Ravenhurst"
+date: "2022-09-14"
+output: html_document
+---
+
+
+```{r}
+#Logical subsetting Q1-5
+
+n = 12345
+vec_1 = sample(12, n, replace = TRUE)
+head(vec_1)
+
+#Use a logical test operator to create a Boolean vector (called vec_2) whose entries are TRUE if the corresponding entry in vec_1 is 3 and FALSE otherwise.
+
+vec_2 <- vec_1 == 3
+vec_2
+
+#Self test: you can use vec_2 to retrieve all of the 3 elements of vec_1 using the following:
+vec_1[vec_2]
+
+#Run the following code to create a large vector containing randomly generated integers between 1 and 12: (note this is the same as above)
+n = 12345
+vec_1 = sample(12, n, replace = TRUE)
+head(vec_1)
+
+#Use the function length() to determine how many elements are in vec_1.
+length(vec_1)
+
+#Now, run the following line to check how many entries have the value 3:
+sum(vec_1 == 3)
+
+n = 10
+vec_1 = sample(12, n, replace = TRUE)
+paste0("Sum of elements with value 3: ", sum(vec_1 == 3))
+
+#this code is creating a vector with 10 randomly generated integers between 1 and 12
+
+```
+LOOPS
+
+```{r}
+#Basic Loops: Q6
+
+for (i in 1:10)
+{
+  print(i)
+}
+
+#Modify the code in the body of the loop to print out a message like “This is loop iteration: 1” for each run through the loop.
+#Hint: use the print() and [paste() or paste0()] functions.
+#Hint: review the nesting functions example in the lab walkthrough.
+
+for (i in 1:10)
+{
+  print(paste0("This is loop iteration: ", i))
+}
+  
+#Intermediate Loops: Q7
+
+n=150
+for (i in 1:n)
+{
+  print(i)
+}
+
+
+#Intermediate Loops: Q8
+#Create an integer variable, n, that holds the value 17.
+#Write code to create a vector called vec_1 of length n. vec_1 should contain [pseudo]randomly generated integers between 1 and 10.
+
+n <-17
+vec_1 <- sample(10, n, replace = TRUE)
+head(vec_1)
+
+#Now, create a loop that:
+
+    #Iterates n times (once for each element of vec_1).
+    #Prints a message that includes the iteration number as well as the corresponding element of vec_1
+### The element of vec_1 at index 1 is 4.
+
+for (i in 1:n)
+{
+  print(paste("The element of vec_1 at index", i, "is", vec_1[i]))
+}
+
+
+
+```
+
+FUNCTIONS
+
+```{r}
+#Goal = Write a function create_and_print_vec().
+
+#Simple function example:
+print_number = function(n)
+{
+  print(paste0("The value of the number is ", n))
+}
+
+print_number(145)
+
+#Your function should take three integer arguments, n, min, and max.
+
+    #n has no default value.
+    #min has a default value of 1.
+    #max has a default value of 10.
+
+#Create a vector of n random integers between the values of min and max.
+
+#Loop through the elements of the vector and print a message with the index of the element and its value.
+
+
+create_and_print_vec = function(n, min = 1, max = 10, print=TRUE)
+{
+  vec_3 = sample(x = min:max, size = n, replace = TRUE)
+  for (i in 1:n)
+  {
+    print(paste("The element at index", i, "is", vec_3[i] ))
+    }
+}
+
+create_and_print_vec(20, min = 1, max = 10)
+create_and_print_vec(10, min = 100, max = 2000)
+
+
+
+
+```
+

@@ -1,0 +1,627 @@
+---
+title: 'Lab 12: Beyond the General Linear Model'
+author: "Johanna Ravenhurst"
+date: "2022-12-10"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+---
+I didn't work with other students. 
+
+```{r}
+#Setup
+rm(list = ls())
+require(here)
+
+birds   = read.csv(here("data", "bird.sub.csv"))
+hab     = read.csv(here("data", "hab.sub.csv"))
+birdhab = merge(
+  birds,
+  hab, by=c("basin", "sub"))
+```
+
+#I need the functions and linear model from Lab 11 in order to re-create the sample size simulation at the beginning of the walkthrough
+
+```{r}
+#functions from Lab 11
+linear_simulator = function(x, y_int, slope, st_dev)
+{
+  y_det = y_int + slope * x
+  output_sim = rnorm(n = length(x), mean = y_det, sd = st_dev)
+  return (output_sim)
+}
+
+#function for simulation loops
+linear_sim_fit = function(x, slope, y_int, st_dev)
+{
+  y_sim = linear_simulator(
+    x = x,
+    y_int = y_int,
+    slope = slope,
+    st_dev = st_dev
+  )
+  fit_sim = lm(y_sim ~ x)
+  return(fit_sim)
+}
+
+```
+
+
+```{r}
+
+#Fit simple linear regression
+fit_1 = lm(BRCR ~ ls, data = birdhab)
+
+#Retrieve the model coefficients
+fit_1_coefs = coefficients(fit_1)
+str(fit_1_coefs)
+
+#Retrieve the standard deviation parameter
+
+fit_1_summary = summary(fit_1)
+str(fit_1_summary)
+fit_1_summary$sigma
+
+#Store the intercept, slope, and standard deviation parameters from the model into the following variables:
+int_obs <- fit_1_coefs["(Intercept)"]
+slope_obs <- fit_1_coefs["ls"]
+sd_obs <- fit_1_summary$sigma
+```
+
+
+```{r}
+alpha = 0.05
+n_sims = 30
+p_vals = numeric(n_sims)
+
+sample_sizes = seq(2, 20)
+sample_size_powers = numeric(length(sample_sizes))
+
+# The maximum x value in the simulation.
+# Use the maximum observed x-value in the data
+max_x = max(birdhab$ls)
+
+for(j in 1:length(sample_sizes))
+{
+  # A sequence of equally-spaced x-values:
+  x_vals = seq(0, max_x, length.out = sample_sizes[j])
+  
+  for(i in 1:n_sims)
+  {
+    fit_sim = linear_sim_fit(
+      x = x_vals,
+      y_int = int_obs,
+      slope = slope_obs,
+      st_dev = sd_obs
+    )
+    p_vals[i] = summary(fit_sim)$coefficients[2, 'Pr(>|t|)']
+  }
+  sample_size_powers[j] = sum(p_vals < alpha) / n_sims
+}
+
+
+sim_sample_size = 
+  data.frame(
+    sample_size = sample_sizes,
+    power       = sample_size_powers)
+
+
+plot(
+  power ~ sample_size, data = sim_sample_size,
+  type = 'l', 
+  main = "Sample Size Simulation, reps = 30", 
+  xlab = 'Sample size', 
+  ylab = 'Statistical Power',
+  ylim = c(0, 1.0))
+
+```
+
+# **Q1: Fitting a LOWESS Model**
+
+**Q1 (2 pts.): Include your plot in your lab report.**
+
+```{r}
+fit_lowess_30 = loess(power ~ sample_size, data = sim_sample_size, span = 0.3)
+str(fit_lowess_30)
+
+newdata_sample_size = data.frame(sample_size = seq(2, 20, length.out = 100)) 
+
+{
+plot(
+  x = newdata_sample_size$sample_size,
+  y = predict(fit_lowess_30, newdata = newdata_sample_size),
+  type = "l",
+  main = "Sample Size/Power Simulation\nLOWESS: 30%",
+  ylab = "Statistical Power", xlab = "Sample Size")
+
+points(newdata_sample_size$sample_size, predict(fit_lowess_30, newdata = newdata_sample_size), col = adjustcolor(col = "steelblue3", alpha.f = .4), pch = 16)
+
+legend(
+  x="bottomright",
+  bty="o", border = "black",
+  legend=c('Smoothed', 'Simulated Points'),
+  col=c("black", "steelblue3"), inset=c(0,0), lty = c(1, NA), pch = c(NA, 16))
+}
+```
+# Nonlinear Least Squares
+
+```{r include = FALSE }
+#Setup - read in dispersal.csv file and ricker_fun() with plot with my guess fit from Lab 5
+
+dat_dispersal <- read.csv(here("data", "dispersal.csv"))
+str(dat_dispersal)
+
+ricker_fun = function(x, a, b) 
+{
+  return(a * x * exp(-b * x))
+}
+
+#Plot of data with my best guesses to fit the Ricker curve to the data. 
+#The a parameter is equal to the slope at the start of the curve, so I guessed that it should be about 0.2/100 based on the rise/run I would expect to fit these data points. The x value at the highest point of the curve is equal to 1/b. I guessed that the highest point of the curve would fall around x=500, so 500 = 1/b or b = 1/500. 
+
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "Ricker Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+
+curve(
+  ricker_fun(x, 0.2/100, 1/500), add = TRUE, 
+   col = "black", type = "l", lty = 2, lwd = 3)
+```
+
+```{r include = FALSE }
+fit_ricker_nls = nls(
+  disp.rate.ftb ~ ricker_fun(dist.class, a, b),
+  data = dat_dispersal,
+  start = list(b = 0, a = 1))
+summary(fit_ricker_nls)
+
+dist_newdata = data.frame(dist.class = seq(0, 1600, length.out = 1600))  
+
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "NLS Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+lines(predict(fit_ricker_nls, newdata = dist_newdata), lwd = 2)
+curve(
+  ricker_fun(x, 0.2/100, 1/500), add = TRUE, 
+   col = "red", type = "l", lty = 2, lwd = 2)
+legend("topright", legend = c("guess", "nls fit"), col=c("red", "black"), lty = c(2, 1), lwd = 2)
+
+```
+# **Q2: Nonlinear Least Squares**
+
+```{r}
+#Setup code - read in data, exponential model code from Lab 5
+
+dat_dispersal <- read.csv(here("data", "dispersal.csv"))
+#str(dat_dispersal)
+
+exp_fun = function(x, a, b)
+{
+  return(a * exp(-b * x))
+}
+
+ #Exponential Model from Lab 5 - explanation of values I picked for visual estimation
+ 
+ #a=0.92
+ #b=1/500
+ #I chose the value for a by using the summary function for the data frame and then selecting the maximum value for standardized dispersal rate. I think this makes sense because a is supposed to be the highest point of the exponential curve. In order to find a potential value for b, I calculated a/e = 0.92/e = 0.338. This is the y value at the point where 1/b is equal to the corresponding x value for the exponential curve. When I look at the scatterplot when y is 0.4, I'm guessing that the x value for the fitted exponential curve should be around 450, so 450 = 1/b, which means b=1/450. 
+
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "Exponential Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+
+ curve(
+  exp_fun(x, 0.92, 1/450), 
+  from = 0, to = 1500, add = TRUE,
+  ylim = c (0, 1),
+  col = "black", type = "l", lty = 2, lwd = 3)
+
+
+```
+**Q2 - Plot of NLS exponential model and visually-fitted exponential model from Lab 5**
+
+```{r}
+fit_exp_nls = nls(
+  disp.rate.ftb ~ exp_fun(dist.class, a, b),
+  data = dat_dispersal,
+  start = list(b = 0, a = 1))
+summary(fit_exp_nls)
+
+dist_newdata2 = data.frame(dist.class = seq(0, 1600, length.out = 1600))  
+
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "Exponential Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+lines(predict(fit_exp_nls, newdata = dist_newdata2), lwd = 2)
+ curve(
+  exp_fun(x, 0.92, 1/450), 
+  from = 0, to = 1500, add = TRUE,
+  ylim = c (0, 1),
+  col = "red", type = "l", lty = 2, lwd = 2)
+legend("topright", legend = c("guess", "nls fit"), col=c("red", "black"), lty = c(2, 1), lwd = 2)
+```
+#Logistic Regression (walkthrough code for HEWA not included in output)
+
+```{r}
+#setup
+dat_bird = read.csv(here("data", "bird.sta.csv"))
+dat_habitat = read.csv(here("data", "hab.sta.csv"))
+dat_all = merge(dat_bird, dat_habitat)
+```
+
+
+```{r include = FALSE }
+
+#hermit warblers - convert to presence/absence 
+dat_all$HEWA_pres = dat_all$HEWA > 0
+
+
+# Create model fits
+#family = binomial tells glm () that we want to do logistic regression
+fit_hewa_slope = glm(HEWA_pres ~ slope, data = dat_all, family = binomial)
+fit_hewa_ba_tot = glm(HEWA_pres ~ ba.tot, data = dat_all, family = binomial)
+fit_hewa_both_additive = glm(HEWA_pres ~ slope + ba.tot, data = dat_all, family = binomial)
+fit_hewa_both_interactive = glm(HEWA_pres ~ slope * ba.tot, data = dat_all, family = binomial)
+
+summary(fit_hewa_both_additive)
+
+#Does either predictor have a significant slope coefficient? - yes, they both have significant p-values. Slope is negative and ba.tot is positive. 
+```
+#Plotting a fitted simple logistic model (walkthrough)
+```{r include = FALSE}
+#str(dat_all)
+
+#make a data.frame object with a sequence of 500 new slopes
+#use min/max slopes from observed data and use na.rm to deal with missing data
+n = 500
+
+slope_newdata = data.frame(
+  slope = seq(
+    from = min(dat_all$slope, na.rm = T),
+    to = max(dat_all$slope, na.rm = T),
+    length.out = n
+  )
+)
+
+#make a data.frame object of total basal area values for prediction
+n = 500
+
+ba_newdata = data.frame(
+  ba.tot = seq(
+    from = min(dat_all$ba.tot, na.rm = T),
+    to = max(dat_all$ba.tot, na.rm = T),
+    length.out = n
+  )
+)
+
+#predictions - predicted values are new columns in the data frame objects
+# type = "response" so the predicted values are on the scale of probability
+
+slope_newdata$hewa_predicted = 
+  predict(
+    fit_hewa_slope,
+    newdata = slope_newdata,
+    type = "response"
+  )
+
+ba_newdata$hewa_predicted = 
+  predict(
+    fit_hewa_ba_tot,
+    newdata = ba_newdata,
+    type = "response"
+  )
+
+
+```
+#Plotting the models
+
+```{r include = FALSE}
+par(mfrow = c(2, 1))
+
+# Presence/absence data, translucent points:
+plot(
+  HEWA_pres ~ slope, data = dat_all,
+  xlab = "Percent Slope",
+  ylab = "HEWA presence/absence",
+  pch = 16, cex = 1.5, col = gray(0, 0.2)
+)
+
+lines(hewa_predicted ~ slope, data = slope_newdata)
+
+plot(
+  HEWA_pres ~ ba.tot, data = dat_all,
+  xlab = "Basal Area",
+  ylab = "HEWA presence/absence",
+  pch = 16, cex = 1.5, col = gray(0, 0.2)
+)
+
+lines(hewa_predicted ~ ba.tot, data = ba_newdata)
+```
+
+
+
+#Plotting both parameters
+```{r include = FALSE}
+#compare models using AIC:
+AIC(
+  fit_hewa_ba_tot,
+  fit_hewa_slope,
+  fit_hewa_both_additive,
+  fit_hewa_both_interactive)
+
+#additive and interactive have lowest AIC - we want to use 3D plots to plot the response with two parameters
+```
+
+```{r include = FALSE}
+#data setup - need dataframe with columns for both predictors (total basal area and slope)
+#create sequences of values for both predictors:
+n = 50
+
+ba.tot = seq(
+  from = min(dat_all$ba.tot, na.rm = T),
+  to = max(dat_all$ba.tot, na.rm = T),
+  length.out = n)
+slope = seq(
+  from = min(dat_all$slope, na.rm = T),
+  to = max(dat_all$slope, na.rm = T),
+  length.out = n)
+
+#use expand.grid() to make a data frame with every combination of the two predictors
+new_dat_all = expand.grid(
+  ba.tot = ba.tot,
+  slope = slope)
+head(new_dat_all)
+tail(new_dat_all)
+
+#use predict to make a vector of model predictions:
+new_dat_all$pred_add = predict(
+  fit_hewa_both_additive,
+  newdata = new_dat_all,
+  type = "response")
+
+new_dat_all$pred_int = predict(
+  fit_hewa_both_interactive,
+  newdata = new_dat_all,
+  type = "response")
+
+#need matrices for data on the z-axis
+
+z_hewa_add = matrix(
+  new_dat_all$pred_add,
+  nrow = length(ba.tot),
+  byrow = FALSE)
+z_hewa_int = matrix(
+  new_dat_all$pred_int,
+  nrow = length(ba.tot),
+  byrow = FALSE)
+```
+
+
+```{r include = FALSE}
+#3D plot
+require(rgl)
+
+rgl::persp3d(
+  x = ba.tot,
+  y = slope,
+  z = z_hewa_add,
+  col = "steelblue",
+  xlab = "Basal Area",
+  ylab = "Slope",
+  zlab = "Pr(present)",
+  alpha = 0.4)
+rglwidget()
+
+
+#interactive model looks like there a lower probability of presence at lower slopes. there is also a dip in one corner - high slope and high basal area dips down to a low probability of presence, which doesn't happen in the additive model
+require(rgl)
+
+rgl::persp3d(
+  x = ba.tot,
+  y = slope,
+  z = z_hewa_int,
+  col = "steelblue",
+  xlab = "Basal Area",
+  ylab = "Slope",
+  zlab = "Pr(present)",
+  alpha = 0.4)
+rglwidget()
+```
+#Contour plot
+
+```{r include = FALSE}
+par(mfrow = c(1, 2))
+contour(
+  x = ba.tot, y = slope,
+  z = z_hewa_add,
+  xlab = "Total Basal Area",
+  ylab = "Percent Slope",
+  main = "Additive")
+contour(
+  x = ba.tot,
+  y = slope,
+  z = z_hewa_int,
+  xlab = "Total Basal Area",
+  ylab = "Percent Slope",
+  main = "Interactive")
+```
+
+# **Q3-5: Logistic Models 1: Model Fits**
+
+```{r}
+#Fit four logistic models of golden crowned kinglet (GCKI) presence/absence
+
+#hermit warblers - convert to presence/absence 
+dat_all$GCKI_pres = dat_all$GCKI > 0
+
+
+# Create model fits
+#family = binomial tells glm () that we want to do logistic regression
+fit_gcki_slope = glm(GCKI_pres ~ slope, data = dat_all, family = binomial)
+fit_gcki_ba_tot = glm(GCKI_pres ~ ba.tot, data = dat_all, family = binomial)
+fit_gcki_both_additive = glm(GCKI_pres ~ slope + ba.tot, data = dat_all, family = binomial)
+fit_gcki_both_interactive = glm(GCKI_pres ~ slope * ba.tot, data = dat_all, family = binomial)
+
+```
+**Q3 (1 pt.): What are the AIC values for each of the 4 models?**
+
+```{r}
+#compare models using AIC:
+AIC(
+  fit_gcki_ba_tot,
+  fit_gcki_slope,
+  fit_gcki_both_additive,
+  fit_gcki_both_interactive)
+```
+**Q4 (1 pt.): Which model would you choose, and why?**
+
+I would chose the interactive model because it has the lowest AIC value. Having the lowest AIC value means that this model does the best job explaining the variation in the data. 
+
+**Q5 (1 pt.): Based on the model coefficient table of your chosen model, describe the direction and significance of the relationship(s) of the predictor variable or variables to the binary response. Make sure your answer is in terms of the ecological context.**
+
+The model coefficient table shows that the slope coefficient is not a significant predictor of golden crowned kinglet on its own (based on the high p-value of 0.3674), but the interaction of slope and total basal area is a significant negative predictor (coefficient = -0.0004, p-value = 0.0269). For every one-unit increase in the interaction between slope and total basal area, there is a 0.0004 decrease in probability of presence of golden crowned kinglet. 
+
+The total basal area on its own is a significant positive predictor (coefficient = 0.0533, p-value = <0.0001). For every one-unit increase in total basal area, there is a significant increase of 0.053 probability of presence of golden crowned kinglet. 
+
+```{r}
+summary(fit_gcki_both_interactive)
+```
+# **Q6-7: Logistic Models 2: Graphical Exploration**
+
+**Q6 (2 pts.): Include your two single-predictor model plots in your report.**
+
+```{r}
+
+#make a data.frame object with a sequence of 500 new slopes
+#use min/max slopes from observed data and use na.rm to deal with missing data
+n = 500
+
+slope_newdata = data.frame(
+  slope = seq(
+    from = min(dat_all$slope, na.rm = T),
+    to = max(dat_all$slope, na.rm = T),
+    length.out = n
+  )
+)
+
+#make a data.frame object of total basal area values for prediction
+n = 500
+
+ba_newdata = data.frame(
+  ba.tot = seq(
+    from = min(dat_all$ba.tot, na.rm = T),
+    to = max(dat_all$ba.tot, na.rm = T),
+    length.out = n
+  )
+)
+
+#predictions - predicted values are new columns in the data frame objects
+# type = "response" so the predicted values are on the scale of probability
+
+slope_newdata$gcki_predicted = 
+  predict(
+    fit_gcki_slope,
+    newdata = slope_newdata,
+    type = "response"
+  )
+
+ba_newdata$gcki_predicted = 
+  predict(
+    fit_gcki_ba_tot,
+    newdata = ba_newdata,
+    type = "response"
+  )
+
+par(mfrow = c(2, 1))
+
+# Presence/absence data, translucent points:
+plot(
+  GCKI_pres ~ slope, data = dat_all,
+  xlab = "Percent Slope",
+  ylab = "GCKI presence/absence",
+  pch = 16, cex = 1.5, col = gray(0, 0.2)
+)
+
+lines(gcki_predicted ~ slope, data = slope_newdata)
+
+plot(
+  GCKI_pres ~ ba.tot, data = dat_all,
+  xlab = "Basal Area",
+  ylab = "GCKI presence/absence",
+  pch = 16, cex = 1.5, col = gray(0, 0.2)
+)
+
+lines(gcki_predicted ~ ba.tot, data = ba_newdata)
+
+```
+**Q7 (4 pts.): Include contour plots (or interactive 3D perspective plots) in your report.**
+
+```{r}
+#data setup - need dataframe with columns for both predictors (total basal area and slope)
+#create sequences of values for both predictors:
+n = 50
+
+ba.tot = seq(
+  from = min(dat_all$ba.tot, na.rm = T),
+  to = max(dat_all$ba.tot, na.rm = T),
+  length.out = n)
+slope = seq(
+  from = min(dat_all$slope, na.rm = T),
+  to = max(dat_all$slope, na.rm = T),
+  length.out = n)
+
+#use expand.grid() to make a data frame with every combination of the two predictors
+new_dat_all = expand.grid(
+  ba.tot = ba.tot,
+  slope = slope)
+head(new_dat_all)
+tail(new_dat_all)
+
+#use predict to make a vector of model predictions:
+new_dat_all$pred_add_gcki = predict(
+  fit_gcki_both_additive,
+  newdata = new_dat_all,
+  type = "response")
+
+new_dat_all$pred_int_gcki = predict(
+  fit_gcki_both_interactive,
+  newdata = new_dat_all,
+  type = "response")
+
+#need matrices for data on the z-axis
+
+z_gcki_add = matrix(
+  new_dat_all$pred_add_gcki,
+  nrow = length(ba.tot),
+  byrow = FALSE)
+z_gcki_int = matrix(
+  new_dat_all$pred_int_gcki,
+  nrow = length(ba.tot),
+  byrow = FALSE)
+
+par(mfrow = c(1, 2))
+contour(
+  x = ba.tot, y = slope,
+  z = z_gcki_add,
+  xlab = "Total Basal Area",
+  ylab = "Percent Slope",
+  main = "Additive GCKI")
+contour(
+  x = ba.tot,
+  y = slope,
+  z = z_gcki_int,
+  xlab = "Total Basal Area",
+  ylab = "Percent Slope",
+  main = "Interactive GCKI")
+```
+

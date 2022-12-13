@@ -1,0 +1,73 @@
+---
+title: "Week 6 Reading Questions: Seed Predation Bolker"
+author: "Johanna Ravenhurst"
+date: "2022-10-26"
+output: html_notebook
+---
+
+```{r}
+require(here)
+```
+
+
+```{r}
+# Clear your R environment to make 
+# sure there are no stray variables.
+
+rm(list = ls())
+
+pol_n_predation = 26
+pol_n_no_predation = 184
+pol_n_total = 210
+pol_predation_rate = pol_n_predation/pol_n_total
+
+psd_n_predation = 25
+psd_n_no_predation = 706
+psd_n_total = 731
+psd_predation_rate = psd_n_predation/psd_n_total
+
+
+#Self-test: Run the following code after you have made your calculations. Your rates should match the observed proportions in the Bolker text on page 11.
+print(
+  paste0(
+    "The seed predation rate for Polyscias fulva is: ",
+    round(pol_predation_rate, digits = 3))) 
+
+print(
+  paste0(
+    "The seed predation rate for Pseudospondias microcarpa is: ",
+    round(psd_predation_rate, digits = 3)))
+
+#Use the seed predation proportions you calculated to determine the ratio of seed predation proportions.
+
+ratio_predation = pol_predation_rate/psd_predation_rate
+ratio_predation
+#3.62019
+
+```
+
+```{r}
+#Create a table of my seed data
+
+# Definition of vectors
+species <- c("Polyscias fulva (pol)", "Pseudospondias microcarpa (psd)")
+taken <- c(26, 25)
+not_taken <- c(184, 706)
+n_total <- c(taken + not_taken)
+predation_rate <- c(taken/n_total)
+
+# Create a data frame from the vectors
+seed_predation <- data.frame(species, taken, not_taken, n_total, predation_rate)
+seed_predation
+
+png(filename = here("week6_seedtable.png"), width = 800, height = 600, res=180)
+table(seed_predation)
+dev.off()
+
+#table(seed_predation)
+#Note: I want to figure out how to make a nicer table of these data...using the table function like this isn't working
+
+str(seed_predation)
+
+```
+

@@ -1,0 +1,8 @@
+"0","hist(
+  dat$wingspan,
+  main = ""Histogram of Wingspan"",
+  xlab = ""wingspan (cm)"")
+"
+"2","Error in hist(dat$wingspan, main = ""Histogram of Wingspan"", xlab = ""wingspan (cm)"") : 
+  object 'dat' not found
+"

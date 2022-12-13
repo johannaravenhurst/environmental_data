@@ -1,0 +1,187 @@
+---
+title: "Using Models 2"
+author: "Johanna Ravenhurst"
+date: "2022-12-06"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+---
+I didn't work with other students.
+
+```{r}
+#Setup
+require(here)
+require(palmerpenguins)
+```
+# Walkthrough code (not included in final output)
+
+#T-tests
+
+```{r include = FALSE}
+#1-sample t-test
+t.test(subset(penguins, species == "Gentoo")$flipper_length_mm)
+
+#Null hypothesis = Gentoo flipper length is equal to 0. This is not sensible
+
+#Instead, test if equal to 218 mm
+
+t.test(
+  x = subset(penguins, species == "Gentoo")$flipper_length_mm,
+  mu = 218
+)
+# Null is that Gentoo flipper length equals 218 mm. Not enough evidence to reject the null
+
+#Instead, test if smaller than 218 mm
+t.test(
+  x = subset(penguins, species == "Gentoo")$flipper_length_mm,
+  mu = 218,
+  alternative = "less"
+)
+
+#the p-value is slightly larger than 0.05, but it is stronger evidence against the null this time. The 95% confidence interval goes to -infinity
+```
+#2-sample t-test
+
+```{r include = FALSE}
+#compare flipper lengths of Gentoo and Adelie
+t.test(flipper_length_mm ~ species, data = subset(penguins, species != "Chinstrap"))
+
+#modify code to test alternative that Adelie pen have shorter flippers than Gentoo
+t.test(flipper_length_mm ~ species, data = subset(penguins, species != "Chinstrap"),
+       alternative = "less")
+
+```
+#Graphical Data Exploration
+
+```{r include = FALSE}
+par(mfrow = c(1, 2))
+hist(penguins$body_mass_g, breaks = 80, main = "histogram of body mass", xlab = "body mass (g)")
+plot(density(penguins$body_mass_g, na.rm = TRUE), main = "density plot of body mass")
+
+#I notice the data has a right skew
+
+boxplot(body_mass_g ~ species, data = penguins)
+#Gentoo body mass is much higher than the other two species. The variance looks larger for Gentoo and Adelie, and Chinstrap has 2 outliers. 
+```
+#Numerical Exploration - test for normality
+
+```{r include = FALSE}
+
+#Step 1: Extract the measurements for each species.
+dat_chinstrap = subset(penguins, species == "Chinstrap")
+
+#Step 2: Calculate the mean body mass for each species.
+mean(dat_chinstrap$body_mass_g, na.rm = TRUE)
+
+#Step 3: Conduct Shapiro tests on each species’ body mass.
+shapiro.test(dat_chinstrap$body_mass_g)
+
+#Shortcut for calculating mean body masses using aggregate
+aggregate(body_mass_g ~ species, data = penguins, FUN = mean)
+
+#Shortcut using aggregate for Shapiro test
+aggregate(
+  body_mass_g ~ species,
+  data = penguins,
+  FUN = function(x) shapiro.test(x)$p.value)
+
+#Fail to reject null hypothesis for Chinstrap and Gentoo - data meets normality assumption
+#Reject null hypothesis for Adelie
+
+```
+#Fit a linear model
+
+```{r include = FALSE}
+fit_species = lm(body_mass_g ~ species, data = penguins)
+#Look at Model Coefficient table
+summary(fit_species)
+#Base case = Adelie penguins
+#Significant p-value for intercept (Adelie) and Gentoo. There is a significant association between those species and body mass
+
+#Conduct an ANOVA
+anova(fit_species)
+
+#2 df because there are 3 levels in the categorical variable (n-1)
+#species sum of squares = how much of total body mass variability is explained by species
+#residual sum of squares = how much of total body mass variability is not explained by our model
+#total sum of squares = total variability in our data
+
+#mean squares = sum squares adjusted by degrees of freedom (helps us compare the relative amount of information each factor in our model explains)
+
+#F-statistic = how much adding a variable to the model improves the model fit. A low p-value means that adding this predictor creates a signficantly better model than leaving it out. 
+
+```
+#2-way ANOVA with species and sex
+
+```{r include = FALSE}
+fit_additive = lm(body_mass_g ~ sex + species, data = penguins)
+
+#Add the interaction term as well
+fit_interact = lm(body_mass_g ~ sex * species, data = penguins)
+summary(fit_interact)
+#Base case = Female Adelie penguins
+#Significant p-value for everything except male Gentoo
+
+#Conduct an ANOVA
+anova(fit_interact)
+```
+# *Model 2 Assignment Questions*
+
+# *Q1-3 Interpreting Boxplots*
+*Q1* **Re-create the conditional boxplot of penguin body mass conditioned on sex and species. Include your boxplot as a figure in your report.**
+
+```{r}
+ boxplot(
+    body_mass_g ~ sex:species, data = penguins,
+    main = "Body Mass of Penguins by Sex and Species",
+    ylab = "Body Mass(g)",
+    xlab = NULL,
+    names = c("female\nAdelie","male\nAdelie", "female\nChinstrap", "male\nChinstrap", "female\nGentoo", "male\nGentoo"),
+    las=2)
+```
+*Q2* **Based on the boxplots, do you think male penguins are significantly heavier than female penguins of the same species? Explain your reasoning, and be sure to explain why you think any observed differences are significant or not.**
+
+Yes, I think male penguins are significantly heavier than female penguins of the same species based on the boxplots. The conditional boxplot shows that the mean body mass of male penguins is clearly much higher than the mean body mass of female penguins for each species. Even when including the variability around the mean, the main box for each distribution appears to be covering a different range of body mass values for male vs. female penguins for each species. 
+
+*Q3* **Do you think adding sex to a model that already includes species will improve the model fit?**
+
+Yes, I think adding sex to a model that already includes species will improve the model fit and describe more of the variation in the data than just including species in the model. The boxplots show that there is a difference in body mass based on sex of the penguin, so I think including this variable in the model should help to explain some of the variation in body mass of penguins. 
+
+# *Q4-5 Model Fit 1*
+
+*Q4* **Show the R-code you used to build fit_both.** 
+
+```{r}
+
+fit_both = lm(body_mass_g ~ sex * species, data = penguins)
+summary(fit_both)
+#Base case = Female Adelie penguins
+#Significant p-value for everything except male Gentoo
+
+#Conduct an ANOVA
+anova(fit_both)
+```
+*Q5* **What is the base case for the two-way model that includes sex and species?**
+
+Base case = Female Adelie penguins
+
+# *Q6-8 Model Coefficients*
+
+*Q6* **What are the names of the two coefficients (from the first column of the coefficient table) that you need to calculate the average mass of female Chinstrap penguins?**
+(Intercept)
+speciesChinstrap
+
+*Q7* **What is the predicted average mass of female Chinstrap penguins in the interactive model?**
+3368.84 + 158.37 = 3,527.21 g
+
+*Q8* **What is the observed average mass of female Chinstrap penguins, calculated from the penguins data?**
+Observed average mass of female Chinstrap penguins = 3,527.206 g
+
+```{r}
+#Shortcut for calculating mean body masses using aggregate
+aggregate(body_mass_g ~ species + sex, data = penguins, FUN = mean)
+```
+
+

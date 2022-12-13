@@ -1,0 +1,66 @@
+"0","```r
+png(filename = here(\"hist_scatter_habitat_terrain.png\"), width = 1000, height = 900)
+par(mfrow = c(2, 3))
+
+hist (dat_habitat$elev,
+      main = \"Histogram of Habitat Elevation\nBy Johanna Ravenhurst\",
+      col =
+        adjustcolor(col = \"steelblue\", alpha.f =.4),
+      border = \"blue\",
+      xlab = \"Elevation\")
+
+hist (dat_habitat$slope,
+      main = \"Histogram of Habitat Slope\nBy Johanna Ravenhurst\",
+      col =
+        adjustcolor(col = \"steelblue\", alpha.f =.4),
+      border = \"blue\",
+      xlab = \"Slope\")
+```"
+"0","```r
+
+hist (dat_habitat$aspect,
+      main = \"Histogram of Habitat Aspect\nBy Johanna Ravenhurst\",
+      col =
+        adjustcolor(col = \"steelblue\", alpha.f =.4),
+      border = \"blue\",
+      xlab = \"Aspect\", 
+      breaks=15)
+
+plot( x = dat_habitat$elev, y = dat_habitat$ba.tot, main = \"Visually-estimated linear model fit\nBasal Area and Elevation\", xlab = \"Elevation\", ylab = \"Total Basal Area\",
+      cex = 0.5)
+```"
+"0","```r
+
+curve(line_point_slope(x, x1 = 400, y1 = 40, slope = -0.07), add = TRUE, col = \"dark red\")
+
+
+plot(
+  x = dat_habitat$slope, 
+  y = dat_habitat$ba.tot, 
+  main = \"Visually-estimated linear model fit\nBasal Area and Slope\", 
+  xlab = \"Slope\", 
+  ylab = \"Total Basal Area\",
+  cex = 0.5)
+
+curve(line_point_slope(x, x1 = 50, y1 = 25, slope = 0.05), add = TRUE, col = \"dark red\")
+
+
+plot(
+  x = dat_habitat$aspect, 
+  y = dat_habitat$ba.tot, 
+  main = \"Visually-estimated linear model fit\nBasal Area and Aspect\", 
+  xlab = \"Aspect\", 
+  ylab = \"Total Basal Area\",
+  cex = 0.5)
+```"
+"0","```r
+
+
+curve(line_point_slope(x, x1 = 200, y1 = 25, slope = 0.0), add = TRUE, col = \"dark red\")
+
+
+dev.off()
+```"
+"1","null device 
+          1 
+"

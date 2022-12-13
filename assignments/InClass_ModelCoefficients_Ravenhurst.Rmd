@@ -1,0 +1,101 @@
+---
+title: "In-Class Models 2: Model Coefficients"
+author: "Johanna Ravenhurst"
+date: "2022-11-22"
+output: html_document
+---
+#I did not work with other students.
+```{r}
+data(iris)
+head(iris)
+str(iris)
+summary(iris)
+
+#Model Coefficients with Categorical Predictor
+fit_species = 
+  lm(
+    Sepal.Length ~ Species,
+    data = iris)
+
+summary(fit_species)
+```
+#Questions about Categorical Predictor Model Coefficients
+
+#Q1 (1 pt.): What is the base species?
+#The base species is the species setosa, because we can see in the model coefficient table that there is no output line with that species named. Also we know that R uses the level with the name that comes first in the alphabet as the reference. 
+
+#Q2 (1 pt.): What is the mean sepal length of the base species?
+#The mean sepal length is for the base species is equal to the estimate for the intercept because it is the value when the other predictors are set to 0. The mean sepal length for Setosa is 5.0060. 
+
+
+#Q3 (1 pt.): What is the mean sepal length of Iris virginica? Show your calculation.
+#The mean sepal length for Iris virginica is the value of the intercept plus the esimate for that particular species. So the mean sepal length is 5.006 + 1.582 = 6.588
+
+#Q4 (1 pt.): Include a conditional boxplot of sepal length and species in your report.
+
+```{r}
+boxplot(
+    Sepal.Length ~ Species, data = iris,
+    main = "Sepal Length and Species",
+    ylab = "Sepal Length",
+    xlab = "Species")
+```
+
+#Q5 (1 pt.): Conduct a normality test on the residuals of the species/sepal length model and report the p-value. Do the residuals meet the assumption of normality, how do you know? Hint: check out the residuals() and shapiro.test() functions.
+```{r}
+
+iris$residuals <- residuals(fit_species)
+
+shapiro.test(iris$residuals)
+
+#The p-value is 0.2189. This high p-value means that we do not have evidence to reject the null hypothesis of normally distributed residuals. The residuals for this model meet the assumption of normality for this general linear model. 
+```
+```{r}
+bartlett.test(Sepal.Length ~ Species,
+    data = iris)
+```
+
+#Q6 (1 pt.): Given your boxplot and the results of your normality test, do you conclude that a linear model is appropriate? Why or why not?
+# The linear model seems appropriate given the results of the normality test, since these data meet the assumption of normally distributed residuals. However, from looking at the boxplot I am concerned that these data might not meet the constant variance assumption. It looks like the Setosa species has less variation than the other two species. I ran a Bartlett test of homogeniety of variances, and the low p-value indicates that we have evidence to reject the null hypothesis of homogeniety of variance. I think we might need to consider a data transformation or some other method to address this issue. 
+
+
+```{r}
+#Model Coefficients with Continuous Predictor
+plot(
+  Petal.Width ~ Petal.Length,
+  data = iris,
+  xlab = "Petal Length (cm)",
+  ylab = "Petal Width (cm)")
+
+fit_petals = 
+  lm(
+    Petal.Width ~ Petal.Length,
+    data = iris)
+
+summary(fit_petals)
+
+```
+#Questions about Continuous Predictor Model Coefficients
+
+#Q7 (1 pt.): What is the expected width of a petal of length 0cm? Show your calculation.
+#Intercept = -0.363076
+#Slope = 0.415755
+#Expected width of petal length of 0 cm = -0.363076 + 0.415755(0) = -0.363076
+
+#Q8 (1 pt.): What is the expected width of a petal of length 4cm? Show your calculation.
+
+#Expected width of petal length of 4 cm = -0.363076 + 0.415755(4) = 1.299944
+
+#Q9 (1 pt.): Does the model meet the assumption of normality of the residuals? How do you know?
+
+```{r}
+iris$residuals_p <- residuals(fit_petals)
+
+shapiro.test(iris$residuals_p)
+
+#The p-value is 0.07504. This high p-value means that we do not have evidence to reject the null hypothesis of normally distributed residuals. The residuals for this model meet the assumption of normality for this general linear model.
+```
+
+
+
+

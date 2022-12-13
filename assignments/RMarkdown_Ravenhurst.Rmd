@@ -1,0 +1,27 @@
+---
+title: "R Markdown Documents - Part 1"
+author: "Johanna Ravenhurst"
+date: "2022-09-26"
+output: 
+  html_document:
+      theme: cosmo
+      toc: true
+      toc_float: 
+        collapsed: false
+        smooth_scroll: false
+---
+
+#Introduction
+My name is **Johanna Ravenhurst** and I am a PhD student in *Epidemiology*.
+
+#Concepts List
+
+1. Data management and analysis in R
+1. Statistics relevant to ecological data analysis
+1. Sources of high-quality environmental data to use in my research
+
+#Course List
+
+* Nutritional Epidemiology
+* Communication Theory
+* Communicable Disease Epidemiology

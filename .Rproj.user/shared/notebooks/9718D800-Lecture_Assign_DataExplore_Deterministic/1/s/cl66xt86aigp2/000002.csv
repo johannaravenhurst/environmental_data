@@ -1,0 +1,12 @@
+"0","```r
+here()
+```"
+"1","[1] \"C:/Users/Johanna Ravenhurst/Documents/environmental_data\"
+"
+"0","```r
+#use here to point to a subdirectory within Rproject - subdirectory is \"data\"
+#you can add another subdirectory after \"data\" if needed
+dat_habitat <- read.csv(here(\"data\", \"hab.sta.csv\"))
+
+head(dat_habitat)
+```"

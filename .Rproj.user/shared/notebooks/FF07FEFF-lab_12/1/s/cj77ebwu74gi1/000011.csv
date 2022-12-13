@@ -1,0 +1,1 @@
+"0","lines(predict(fit_exp_nls, newdata = dist_newdata2), lwd = 2)"

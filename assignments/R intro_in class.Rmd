@@ -1,0 +1,103 @@
+---
+title: "Week 02: In-class R coding practice"
+author: "Johanna Ravenhurst"
+date: "2022-09-15"
+output: html_document
+---
+
+```{r}
+data(iris)
+head(iris)
+
+```
+
+```{r}
+#To get the entries in the “Sepal.Width” column you can type:
+iris$Sepal.Width
+
+#Use the functions mean() and sd() to calculate the mean and standard deviation of vectors:
+mean(iris$Sepal.Length)
+sd(iris$Sepal.Width)
+
+plot(x = iris$Sepal.Width, y = iris$Sepal.Length)
+
+
+data_center_x = mean(iris$Sepal.Width)
+data_center_y = mean(iris$Sepal.Length)
+c(data_center_x, data_center_y)
+
+plot(x = iris$Sepal.Width, y = iris$Sepal.Length)
+points(x = data_center_x, y = data_center_y, col = "red")
+```
+
+```{r}
+
+#Function to draw a line
+
+line_point_slope = function(x, x1, y1, slope)
+{
+  get_y_intercept = 
+    function(x1, y1, slope) 
+      return(-(x1 * slope) + y1)
+  
+  linear = 
+    function(x, yint, slope) 
+      return(yint + x * slope)
+  
+  return(linear(x, get_y_intercept(x1, y1, slope), slope))
+}
+
+
+#Try running the code in your R session then running the function with the arguments: 2, 4, 4, -2
+
+line_point_slope(2, 4, 4, -2)
+
+
+```
+
+```{r}
+#Now re-create the plot with a line
+plot(x = iris$Sepal.Width, y = iris$Sepal.Length)
+points(x = data_center_x, y = data_center_y, col = "red")
+curve(
+  line_point_slope(
+    x, 
+    data_center_x, 
+    data_center_y,
+    -0.1), 
+  add = TRUE)
+
+#Now try to plot the line with a different slope
+
+plot(x = iris$Sepal.Width, y = iris$Sepal.Length, main="Johanna Ravenhurst", xlab = "iris$Sepal.Width", ylab = "iris$Sepal.Length")
+points(x = data_center_x, y = data_center_y, col = "red")
+curve(
+  line_point_slope(
+    x, 
+    data_center_x, 
+    data_center_y,
+    -3.0), 
+  add = TRUE)
+
+#add a title
+
+```
+
+
+```{r}
+library(MASS)
+data(Animals)
+head(Animals)
+
+mean(Animals$body)
+
+animal_center_x = mean(Animals$body)
+animal_center_y = mean(Animals$brain)
+c(animal_center_x, animal_center_y)
+
+plot(x = Animals$body, y = Animals$brain)
+points(x = animal_center_x, y = animal_center_y, col = "red")
+
+
+```
+

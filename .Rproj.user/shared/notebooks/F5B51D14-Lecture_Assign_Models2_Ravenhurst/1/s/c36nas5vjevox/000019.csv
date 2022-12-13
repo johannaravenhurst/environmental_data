@@ -1,0 +1,2 @@
+"0","#Shortcut for calculating mean body masses using aggregate"
+"0","aggregate(body_mass_g ~ species + sex, data = penguins, FUN = mean)"

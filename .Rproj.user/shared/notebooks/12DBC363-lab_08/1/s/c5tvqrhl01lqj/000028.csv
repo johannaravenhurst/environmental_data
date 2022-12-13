@@ -1,0 +1,7 @@
+"0",""
+"0","legend("
+"0","  x=""topright"","
+"0","  bty=""n"","
+"0","  legend=c('Null', 'Alt.'),"
+"0","  col=c(""black"", ""blue""), lwd=2, inset=c(.1,.1))"
+"0",""

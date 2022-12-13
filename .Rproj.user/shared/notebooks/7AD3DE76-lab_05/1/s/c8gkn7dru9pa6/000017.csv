@@ -1,0 +1,7 @@
+"0","#calculate the predicted yvalues based on my estimated model parameters
+#add y_predicted variable as a new column in the dat_random dataset
+dat_dispersal$y_predicted_exp <- curve(dat_dispersal$dist.class, 0.92, 1/450)
+"
+"2","Error in curve(dat_dispersal$dist.class, 0.92, 1/450) : 
+  'expr' must be a function, or a call or an expression containing 'x'
+"

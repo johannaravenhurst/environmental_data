@@ -1,0 +1,9 @@
+"0","library(here)
+"
+"2","here() starts at C:/Users/Johanna Ravenhurst/Documents/environmental_data
+"
+"0",""
+"0","dat_bird <- read.csv(here(""data"", ""bird.sta.csv""))"
+"0","dat_habitat <- read.csv(here(""data"", ""hab.sta.csv""))"
+"0",""
+"0","head(dat_bird)"

@@ -1,0 +1,6 @@
+"0","#Only need 1 set of resamping row indices because bootstrapping samples entire rows"
+"0","set.seed(345)"
+"0","index_1 = sample(nrow(dat_1), replace = TRUE)"
+"0",""
+"0","dat_boot = dat_1[index_1, ]"
+"0","head(dat_boot)"

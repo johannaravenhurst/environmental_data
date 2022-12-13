@@ -1,0 +1,4 @@
+"0","plot(x = dat_all$elev, y = deju_present_absent)
+plot(x = dat_all$slope, y = deju_present_absent)
+"
+"0","plot(x = dat_all$aspect, y = deju_present_absent)"

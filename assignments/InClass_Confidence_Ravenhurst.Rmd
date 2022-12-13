@@ -1,0 +1,101 @@
+---
+title: "In-Class Confidence Intervals"
+author: "Johanna Ravenhurst"
+date: "2022-10-28"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+#Critical values for Standard Normal:
+
+qnorm(c(0.025, 0.975))
+
+#Note that to calculate the quantiles I used endpoints of 0.025 and 0.975 instead of 0.05 and 0.95. Why?
+#because 95% is the interval between 2 sd above and below the mean, we subtract 5/2 from each side of the distribution
+#lower = 0.025 and upper = 0.975
+```
+#Standard Normal Critical Values - Q1
+```{r}
+#Q1 (1 pt.): Calculate the critical z-values for a 90% CI of the standard normal distribution (not a 95% interval). Show the R-code you used to perform the calculation.
+
+alpha = 0.1
+z_crit = z_lower = qnorm(alpha/2, mean = 0, sd = 1)
+z_upper = qnorm(1-(alpha/2), mean = 0, sd = 1)
+
+print(c('Critical Z: lower tail' = z_lower,
+        'Critical Z: upper tail' = z_upper), digits = 3)
+
+#Answer: lower -1.64, upper 1.64
+
+
+```
+#T-distribution critical values - Q2-4
+
+```{r}
+
+#Q2 (1 pt.): Consult the help entry for qt() and calculate the critical values for df = 10. Show the R-code you used to perform the calculation.
+
+#t-score for 95th quantile of t distribution with df=10
+qt(.95, df=10)
+
+#t-score for 5th quantile of t distribution with df=10
+qt(.05, df=10)
+
+#Q3 (2 pts.): How many degrees of freedom are required for the 2.5% lower critical value of a t-distribution to match the 2.5% lower critical z-value (from the standard normal) to within one decimal place? Show the R-code you used to perform the calculation.
+
+qt(.05, df= c(1:10, 20, 50))
+
+#Need at least 50 df for the 2.5% lower critical value of a t-distribution to almost match the 2.5% lower critical z-value of -1.64 to within one decimal place.
+
+```
+```{r}
+#Q4 (1 pt.): How many degrees of freedom are required for the 2.5% lower critical value of a t-distribution to match the 2.5% lower critical z-value (from the standard normal) to within two decimal places? Show the R-code you used to perform the calculation.
+
+qt(.05, df= c(1:10, 20, 50, 100, 1000, 10000))
+
+#Need at least 1000 df for the 2.5% lower critical value of a t-distribution to almost match the 2.5% lower critical z-value of -1.64 to within one decimal place.
+
+```
+
+
+#Building a 95% CI of the mean - Q5-6
+
+```{r}
+#Suppose you know that the sample standard deviation for a group of 50 measurements is 3.14. The mean value is 10.0.
+#n=50
+#df = n-1 = 49
+
+
+#Q5 (2 pts.): What are the critical t-values you would need to know to construct a 95% CI on the mean?
+
+#t-score for 95th quantile of t distribution with df=49
+t_upper = qt(.95, df=49)
+
+#t-score for 5th quantile of t distribution with df=49
+t_crit = t_lower = qt(.05, df=49)
+
+print(c('T upper' = t_upper), digits = 3)
+print(c('T lower' = t_lower), digits = 3)
+
+#Q6 (3 pts.): Construct the interval. Show the R-code you used to perform the calculation.
+
+sample_n = 50
+sample_sd = 3.14
+sample_mean = 10.0
+
+#Calculate the sample standard error
+sample_error = sample_sd / sqrt(sample_n)
+
+print(c('Sample Standard Error' = sample_error), digits = 3)
+
+#multiply the sample standard error by the critical t-value to get CI radius
+
+ci_radius = abs(sample_error * t_crit)
+
+print(c('Confidence Interval' = sample_mean-ci_radius, sample_mean+ci_radius), digits =5)
+
+
+```
+

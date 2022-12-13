@@ -1,0 +1,97 @@
+---
+title: "InClass_DataExploration"
+author: "Johanna Ravenhurst"
+date: "2022-09-20"
+output: html_document
+---
+
+#In-class group work: https://michaelfrancenelson.github.io/environmental_data/assignments/in_class_data_exploration_1.html
+
+```{r}
+install.packages("palmerpenguins")
+install.packages("here")
+
+#Require() and library() do the same thing
+
+require(palmerpenguins)
+require(here)
+
+```
+
+```{r}
+#Use class to check what kind of object penguins is
+class(penguins)
+#convert to data frame object
+penguins = data.frame(penguins)
+
+#Try to calculate the body mass of all penguins - this results in NA
+mean(penguins$body_mass_g)
+
+head(penguins)
+#there are some NA values in the body_mass_g field
+
+```
+
+#Help search for mean - 
+#na.rm	= a logical evaluating to TRUE or FALSE indicating whether NA values should be stripped before the computation proceeds.
+
+
+```{r}
+mean(penguins$body_mass_g, na.rm = TRUE)
+
+summary(penguins)
+```
+
+#BOXPLOTS
+
+```{r}
+boxplot(penguins$bill_depth_mm)
+
+boxplot(bill_depth_mm ~ sex, data = penguins)
+
+par(mfrow = c(1, 2))
+boxplot(penguins$bill_depth_mm)
+boxplot(bill_depth_mm ~ sex, data = penguins)
+
+par(mfrow = c(1, 2))
+boxplot(penguins$flipper_length_mm)
+boxplot(flipper_length_mm ~ species, data = penguins)
+
+require(here)
+png(filename = here("inclass_penguins_boxplot.png"), width = 800, height = 600)
+boxplot(flipper_length_mm ~ species, data = penguins)
+dev.off()
+```
+
+#COPLOTS
+
+```{r}
+coplot(body_mass_g ~ bill_depth_mm | sex, data = penguins)
+
+#What variable did I use as the conditioning variable? sex
+
+    #Try different conditioning variables.
+        #You should try both categorical and numerical conditioning variables.
+
+#try adding species as categorical
+coplot(body_mass_g ~ bill_depth_mm | species, data = penguins, rows=1)
+
+#try adding year as numerical conditioning variable
+
+coplot(body_mass_g ~ bill_depth_mm | year, data = penguins, rows=1)
+
+
+```
+
+
+#SAVING PLOTS TO A FILE
+
+```{r}
+require(here)
+png(filename = here("basic_histogram.png"), width = 800, height = 600)
+hist(penguins$body_mass_g)
+dev.off()
+```
+
+
+

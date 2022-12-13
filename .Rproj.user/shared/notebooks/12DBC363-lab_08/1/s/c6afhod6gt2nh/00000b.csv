@@ -1,0 +1,7 @@
+"0","#Remove Gentoo penguins using droplevels"
+"0","penguin_dat = droplevels(subset(penguins, species != ""Gentoo""))"
+"0","{"
+"0","  boxplot("
+"0","    flipper_length_mm ~ species, data = penguin_dat,"
+"0","    ylab = ""Flipper length (mm)"")"
+"0","}"

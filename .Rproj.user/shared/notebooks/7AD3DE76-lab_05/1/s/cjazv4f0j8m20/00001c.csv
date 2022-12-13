@@ -1,0 +1,15 @@
+"0","png(filename = here(""lab_05_salam_linear_resids.png""), width = 800, height = 600, res=180)
+hist(dat_dispersal$resids_linear,
+     main = ""Residuals for Linear Model"",
+      col =
+        adjustcolor(col = ""steelblue"", alpha.f =.4),
+      border = ""blue"",
+      xlab = ""Residuals"")
+dev.off()
+"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"

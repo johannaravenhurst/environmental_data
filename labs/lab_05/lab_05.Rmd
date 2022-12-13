@@ -1,0 +1,348 @@
+---
+title: "Lab 5: Uncertainty, Samples, and Populations"
+author: "Johanna Ravenhurst"
+date: "2022-10-12"
+output: html_notebook
+---
+
+```{r}
+require(here)
+```
+
+
+Example Ricker Function
+
+```{r}
+ricker_fun = function(x, a, b) 
+{
+  return(a * x * exp(-b * x))
+}
+
+curve(
+  ricker_fun(x, 1, 1), 
+  from = 0, to = 5, add = FALSE, 
+  main = "Ricker function: a = 1, b = 1",
+  ylab = "f(x)", xlab = "x")
+
+#from and to specifies range of x values
+#add=FALSE adds a new plot
+
+exp_fun = function(x, a, b)
+{
+  return(a * exp(-b * x))
+}
+
+#create similar curve to example
+curve(
+  exp_fun(x, 0.1, 0.69), 
+  from = 0, to = 10, add = FALSE, 
+  main = "Exponential Function: a = 0.1, b = 0.69",
+  ylab = "f(x)", xlab = "x")
+
+curve(
+  exp_fun(x, 2.2, 1/15), add = FALSE, from = 0, to = 50,
+  ann = FALSE, axes = TRUE, ylab = "f(x)"); box()
+```
+#Simulated data on a line
+
+```{r}
+# Seed the RNG so we can reproduce our results
+set.seed(1234567)
+
+# Specify the x-range and number of points:
+n_pts = 50
+x_min = 2
+x_max = 10
+
+# Generate the x-values
+x_sim = runif(n_pts, min = x_min, max = x_max)
+
+param_intercept = 2.3
+param_slope = 0.67
+y_pred = param_intercept + x_sim * param_slope
+plot(x_sim, y_pred, main = "Simulated Data\nNo Errors", xlab = "", ylab = "")
+
+error_mean = 0
+error_sd = 0.25
+
+y_observed = 
+  y_pred + 
+  rnorm(
+    n = n_pts, 
+    mean = error_mean, 
+    sd = error_sd)
+plot(x_sim, y_observed, main = "Normally Distributed Errors\n Constant Variance", xlab = "", ylab = "")
+
+error_mean = 0
+error_sd = 0.1
+
+y_observed_2 = 
+  y_pred + 
+  rnorm(
+    n = n_pts, 
+    mean = error_mean, 
+    sd = error_sd * x_sim)
+
+par(mfrow = c(1, 2))
+plot(x_sim, y_observed, main = "Normally Distributed Errors\n Constant Variance", xlab = "", ylab = "")
+plot(x_sim, y_observed_2, main = "Normally Distributed Errors\n Increasing Variance", xlab = "", ylab = "")
+
+#now create data with exponentially-distributed errors
+#rate parameter of 1.2
+
+y_observed_3 = 
+    y_pred + 
+    rexp(
+    n = n_pts, 
+    rate = 1.2)
+
+par(mfrow = c(1, 2))
+plot(x_sim, y_observed, main = "Normally Distributed Errors\n Constant Variance", xlab = "", ylab = "")
+plot(x_sim, y_observed_3, main = "Exponentially Distributed Errors", xlab = "", ylab = "")
+```
+#Fitted Linear Models
+
+```{r}
+fit_1 = lm(y_observed ~ x_sim)
+fit_2 = lm(y_observed_2 ~ x_sim)
+fit_3 = lm(y_observed_3 ~ x_sim)
+
+par(mfrow = c(1, 3))
+
+plot(y_observed ~ x_sim); abline(fit_1)
+plot(y_observed_2 ~ x_sim); abline(fit_2)
+plot(y_observed_3 ~ x_sim); abline(fit_3)
+```
+#Question 2
+
+Q2 (4 pts.): In your lab report, include a single figure containing four negative exponential curves with the following parameter values and line colors/textures:
+
+    curve 1: a = 1.9, b = 0.1, line color = black, line texture = solid
+    curve 2: a = 1.9, b = 0.3, line color = black, line texture = dotted
+    curve 3: a = 1.2, b = 0.2, line color = red, line texture = solid
+    curve 4: a = 1.2, b = 0.4, line color = red, line texture = dotted
+    Hint: check out the from, to, ylim, and add arguments for curve(). Setting appropriate x- and y-limits in your plot will help you see all four curves.
+
+
+```{r}
+#exp_fun = function(x, a, b)
+#{
+#  return(a * exp(-b * x))
+#}
+png(filename = here("lab_05_exponentialcurves.png"), width = 800, height = 600, res=180)
+{
+curve(
+  exp_fun(x, 1.9, 0.1), 
+  from = 0, to = 30, add = FALSE,
+  ylim = c (0, 2.0),
+  main = "Exponential Functions",
+  ylab = "f(x)", xlab = "x",
+  col = "black", type = "l" )
+
+curve(
+  exp_fun(x, 1.9, 0.3), 
+  from = 0, to = 30, add = TRUE,
+  ylim = c (0, 2.0),
+  main = "Exponential Functions",
+  ylab = "f(x)", xlab = "x",
+  col = "black", type = "l", lty = 2, lwd =3)
+
+curve(
+  exp_fun(x, 1.2, 0.2), 
+  from = 0, to = 30, add = TRUE,
+  ylim = c (0, 2.0),
+  main = "Exponential Functions",
+  ylab = "f(x)", xlab = "x",
+  col = "red", type = "l")
+
+curve(
+  exp_fun(x, 1.2, 0.4), 
+  from = 0, to = 30, add = TRUE,
+  ylim = c (0, 2.0),
+  main = "Exponential Functions",
+  ylab = "f(x)", xlab = "x",
+  col = "red", type = "l", lty = 2, lwd =3)
+}
+dev.off()
+```
+#Ricker Functions
+
+In your lab report, include a single plot containing 6 Ricker curves with these parameter values:
+
+    curve 1: a = 25, b = 0.2, line color = black, line texture = solid
+    curve 2: a = 20, b = 0.2, line color = black, line texture = dotted
+    curve 3: a = 10, b = 0.2, line color = black, line texture = dotted
+    curve 4: a = 75, b = 0.3, line color = red, line texture = solid
+    curve 5: a = 50, b = 0.3, line color = red, line texture = dotted
+    curve 6: a = 40, b = 0.3, line color = red, line texture = dotted
+
+
+```{r}
+#ricker_fun = function(x, a, b) 
+#{
+#  return(a * x * exp(-b * x))
+#}
+png(filename = here("lab_05_rickercurves.png"), width = 800, height = 600, res=180)
+{
+curve(
+  ricker_fun(x, 25, 0.2), 
+  from = 0, to = 40, add = FALSE, 
+  ylim = c(0,100),
+  main = "Ricker functions",
+  ylab = "f(x)", xlab = "x",
+  col = "black", type = "l")
+
+curve(ricker_fun(x, 20, 0.2), add = TRUE, col = "black", type = "l", lty = 2, lwd = 3)
+
+curve(ricker_fun(x, 10, 0.2), add = TRUE, col = "black", type = "l", lty = 4, lwd = 3)
+
+curve(ricker_fun(x, 75, 0.3), add = TRUE, col = "red", type = "l")
+
+curve(ricker_fun(x, 50, 0.3), add = TRUE, col = "red", type = "l", lty = 2, lwd = 3)
+
+curve(ricker_fun(x, 40, 0.3), add = TRUE, col = "red", type = "l", lty = 4, lwd = 3)
+}
+dev.off()
+```
+#Salamander First Time Breeders
+
+```{r}
+dat_dispersal <- read.csv(here("data", "dispersal.csv"))
+
+str(dat_dispersal)
+head(dat_dispersal)
+summary(dat_dispersal)
+
+```
+
+
+```{r}
+  line_point_slope = function(x, x1, y1, slope)
+  {
+    get_y_intercept = 
+      function(x1, y1, slope) 
+        return(-(x1 * slope) + y1)
+    
+    linear = 
+      function(x, yint, slope) 
+        return(yint + x * slope)
+    
+    return(linear(x, get_y_intercept(x1, y1, slope), slope))
+  }
+```
+
+#Linear Model
+
+```{r}
+#Linear Model. Provide the values of the slope, x1, and y1 parameters you chose. Briefly describe how you chose the values.
+#x1: 800
+#y1: 0.2
+#slope: -0.0001
+#I looked for a plausible x and y value to use as a start and then added the line to the plot to see if it visually fits the data points. Then I decided the slope was too flat, so I adjusted the slope by subtracting zeros until the line seemed to fit the data.
+
+#png(filename = here("lab_05_salam_linear.png"), width = 800, height = 600, res=180)
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "Linear Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+
+ curve(line_point_slope(x, 800, 0.2, -0.0001), add = TRUE)
+#dev.off()
+
+#calculate the predicted yvalues based on my estimated model parameters
+#add y_predicted variable as a new column in the dat_random dataset
+dat_dispersal$y_predicted <- line_point_slope(dat_dispersal$dist.class, 800, 0.2, -0.0001)
+
+#calculate residuals and add to dat_random as a new column
+#residuals are the difference between the predicted and observed values
+
+dat_dispersal$resids_linear <- dat_dispersal$y_predicted - dat_dispersal$disp.rate.ftb
+
+png(filename = here("lab_05_salam_linear_resids.png"), width = 800, height = 600, res=180)
+hist(dat_dispersal$resids_linear,
+     main = "Residuals for Linear Model",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Residuals")
+dev.off()
+
+```
+#Exponential Model
+```{r}
+ #Exponential Model. Provide the values of the a and b. Briefly describe how you chose the values.
+ 
+ #a=0.92
+ #b=1/500
+ #I chose the value for a by using the summary function for the data frame and then selecting the maximum value for standardized dispersal rate. I think this makes sense because a is supposed to be the heighest point of the exponential curve. In order to find a potential value for b, I calculated a/e = 0.92/e = 0.338. This is the y value at the point where 1/b is equal to the corresponding x value for the exponential curve. When I look at the scatterplot when y is 0.4, I'm guess that the x value for the fitted exponential curve should be around 450, so 450 = 1/b, which means b=1/450. 
+
+png(filename = here("lab_05_salam_expon.png"), width = 800, height = 600, res=180) 
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "Exponential Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+
+ curve(
+  exp_fun(x, 0.92, 1/450), 
+  from = 0, to = 1500, add = TRUE,
+  ylim = c (0, 1),
+  col = "black", type = "l", lty = 2, lwd = 3)
+ dev.off()
+
+
+#calculate the predicted yvalues based on my estimated model parameters
+#add y_predicted variable as a new column in the dat_random dataset
+dat_dispersal$y_predicted_exp <- curve(dat_dispersal$dist.class, 0.92, 1/450)
+
+#calculate residuals and add to dat_random as a new column
+#residuals are the difference between the predicted and observed values
+
+dat_dispersal$resids_exp <- dat_dispersal$y_predicted_exp - dat_dispersal$disp.rate.ftb
+
+
+hist(dat_dispersal$resids_linear,
+     main = "Residuals for Linear Model",
+      col =
+        adjustcolor(col = "steelblue", alpha.f =.4),
+      border = "blue",
+      xlab = "Residuals")
+
+
+```
+
+#Ricker Model
+
+```{r}
+#Ricker Model Provide the values of the a and b. Briefly describe how you chose the values.
+
+#The a parameter is equal to the slope at the start of the curve, so I guessed that it should be about 0.2/100 based on the rise/run I would expect to fit these data points. The x value at the highest point of the curve is equal to 1/b. I guessed that the highest point of the curve would fall around x=500, so 500 = 1/b or b = 1/500. 
+
+png(filename = here("lab_05_salam_ricker.png"), width = 800, height = 600, res=180)  
+plot(dat_dispersal$dist.class,
+    dat_dispersal$disp.rate.ftb,
+    xlim = c(0, 1500),
+     main = "Ricker Model Salamander\nFirst Time Breeders", 
+     xlab = "distance class", ylab = "standardized dispersal rate")
+
+curve(
+  ricker_fun(x, 0.2/100, 1/500), add = TRUE, 
+   col = "black", type = "l", lty = 2, lwd = 3)
+
+dev.off()
+```
+
+
+Calculate the residuals for your three fitted models and store them in a data.frame
+
+    The columns containing the residuals should have the following names:
+    “resids_linear”
+    “resids_exp”
+    “resids_ricker”
+
+
+```{r}
+
+```
+

@@ -1,0 +1,6 @@
+"0",""
+"0","lines("
+"0","  density(result_boot),"
+"0","  main = ""Mike's Alternative Distribution Density Plot"","
+"0","  xlab = ""Slope Coefficient"","
+"0","  col = ""blue"", lwd=2)"

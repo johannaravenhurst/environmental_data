@@ -1,0 +1,3 @@
+"0",""
+"0","veg = read.csv(here(""data"", ""vegdata.csv""))"
+"0","head(veg)"

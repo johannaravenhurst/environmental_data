@@ -1,0 +1,4 @@
+"0",""
+"0","lines("
+"0","  density(dat_fl2$DBH_in[dat_fl2$Failure_Standardized == ""none""]),"
+"0","  col = ""black"", lwd=1.5, lty = 3)"
