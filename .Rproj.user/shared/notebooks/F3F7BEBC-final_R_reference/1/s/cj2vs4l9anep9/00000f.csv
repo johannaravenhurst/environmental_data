@@ -1,0 +1,2 @@
+"0","#Extract the measurements for only the Adelie penguins from the penguins dataset"
+"0","dat_adelie = subset(penguins, species == ""Adelie"")"

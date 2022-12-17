@@ -1,0 +1,2 @@
+"0","#select the notch.depth column in the ginkgo data and save as notch_ginkgo"
+"0","notch_ginkgo <- ginkgo$notch_depth"

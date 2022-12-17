@@ -1,0 +1,569 @@
+---
+title: "R Reference Guide"
+author: "Johanna Ravenhurst"
+date: "2022-12-14"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+---
+
+# R Reference Guide {.tabset .tabset-pills}
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Notes about setup code chunk options:
+
+#include= FALSE to skip including that code chunk for the knit
+
+#echo = FALSE to prevent printing of the R code that generated the plot
+
+#It’s a good idea to name your code chunks. This makes it easier to debug your code. To give your chunk a name, simply type a space after the r and type a name. You need to add a comma after the name if you are adding echo = FALSE or another code chunk option. The name should come first.  
+```
+
+
+## Loading Data and Packages
+
+R does not automatically load every extra package that has been installed. We must tell R that we want to load any packages that we need for a particular R script. 
+
+**library() and require() - the two functions for loading installed packages. They do almost the exact same thing.**
+
+- library() will load a package again even if it was already loaded in the same R session. Use this if a package needed to be updated partway through a coding session.
+- Save time by using require() because it does not re-load packages that are in the R memory already. 
+
+Here is an example of using require() to load the here package and library() to load the palmerpenguins packages:
+
+```{r}
+#load here package
+require(here)
+
+#load palmerpenguins package
+library(palmerpenguins)
+```
+**Two functions for reading in a data set to create an R data.frame are here() and read.csv()**
+
+read.csv() is a function which reads a csv data file and creates a R data.frame. 
+
+here() is useful because it always starts with the current Rproject folder (it does not change based on the working directory)
+
+- Specify the nested subdirectories (folder names) in order (in quotes, comma in between subdirectory names)
+- Specify the name of the file you wish to load (in quotes, include filetype extension)
+
+This is an example of using here() and read.csv() to create a data.frame of the 2021 ginkgo data, which is stored in the "data" subdirectory of my RProject. 
+
+- Note that we assign the data.frame a name and save it to the R Environment using <- or = before the functions.
+
+```{r}
+#you can check the path to your RProject directory by just running the here() function
+here()
+
+#data.frame called "ginkgo" created using here() and read.csv(). 
+ginkgo <- read.csv(here("data", "ginkgo_data_2021.csv"))
+
+#If you check the R Environment, there is a data.frame called "ginkgo" with 756 observations and 6 variables. 
+```
+
+## Data Structures
+
+**The combine function c() links elements into a vector (a 1-dimensional data structure consisting of 1 or more elements).**
+
+    All of the elements must be of the same type.
+        I can’t combine character and numeric types in the same call to c()
+
+Here’s two examples using numeric and character data types:
+
+```{r}
+## Create a vector of numbers:
+num_vec  = c(1, 4, 8, 9, 13)
+
+## Create a vector of characters:
+char_vec = c("a", "fish", "data is cool")
+```
+
+I can show the contents of a vector by typing the name of the vector, or using the print() function.
+
+```{r}
+## Typing the name of the vector into the console prints the contents
+num_vec
+```
+
+```{r}
+## The print() function accomplishes the same task:
+print(char_vec)
+```
+I can use the class() function to learn the data type stored in the vector:
+```{r}
+class(char_vec)
+class(num_vec)
+```
+
+**length() - tells you the number of elements in a vector or other R object, or the number of columns in a data.frame.**
+
+- length() also counts NA values
+- for a string variable, it will count everything in quotes as 1
+
+We can use this to calculate the length of the vectors we created above:
+```{r}
+#Repeat code as a reminder of the vectors we created
+## Create a vector of numbers:
+num_vec  = c(1, 4, 8, 9, 13)
+
+## Create a vector of characters:
+char_vec = c("a", "fish", "data is cool")
+
+length(num_vec)
+#answer = 5
+length(char_vec)
+#answer = 3
+```
+
+
+**matrix() - combines elements in to a matrix with a set number of rows/columns. The elements must be the same data type.**
+
+matrix(elements to arrange, byrow = , nrow = )
+
+- elements to arrange can be listed with c(), or include a range with a colon like 1:9
+- byrow = TRUE fills the matrix by rows. byrow = FALSE fills by columns.
+- nrow gives the desired number of rows in the matrix
+
+Here are two examples of creating a matrix:
+```{r}
+#matrix with numbers 1:12, arranged in 4 rows and filled by rows
+matrix(1:12, byrow = TRUE, nrow = 4)
+
+#matrix with days of the week, arranged in 2 rows and filled by columns
+matrix(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), byrow = FALSE, nrow = 2)
+
+```
+When you specify a number of rows that does not fit the number of elements evenly, the matrix either cuts off the sequence or begins the sequence again to make the elements fit in the specified number of rows. 
+
+You can name the rows and columns of a matrix to make it easier to interpret the data. Do this using rownames() and colnames(). You can also use rowSums() to calculate the totals for each row. Here is an example of assigning row/column names to a matrix containing data from three plots with tick counts from two separate sample days and then calculating the row sums. 
+
+```{r}
+#Tick count vectors:
+puffers <- c(56, 43)
+notch <- c(4, 87)
+sugarloaf <- c(90, 5)
+
+#Create the matrix 
+tick_counts <- matrix(c(puffers, notch, sugarloaf), nrow=3, byrow=TRUE)
+totals <- rowSums(tick_counts)
+#use cbind() to add a new vector to a matrix
+all_tick_counts <- cbind(tick_counts, totals)
+
+#Create vectors with plot names, sample day names
+plots <- c("Puffers Pond", "The Notch", "Mt. Sugarloaf")
+sample_days <- c("Day 1", "Day 2", "Total")
+
+#Name the columns with sample_days
+colnames(all_tick_counts) <- sample_days
+
+#Name the rows with plot names
+rownames(all_tick_counts) <- plots
+
+
+all_tick_counts
+```
+
+
+```{r include = FALSE}
+#Example of assigning names to the elements of a vector
+some_vector <- c("John Doe", "poker player")
+names(some_vector) <- c("Name", "Profession")
+```
+
+
+**data.frame() creates an R data frame, which may contain all data types (numeric, factor, logical). Each row is an observation with values for different variables arranged in columns**
+
+- create a data.frame by listing the vectors to include. When creating your own data frame, all of the variables need to have the same number of elements
+
+```{r}
+#create 3 vectors for the data.frame "tickdata"
+day_1_ticks <- c(3, 4, 67, 87)
+day_2_ticks <- c(56, 7, 98, 12)
+plots <- c("Puffers Pond", "The Notch", "Mt. Sugarloaf", "Puffers Pond")
+
+#create the data.frame "tickdata" by combining the three vectors
+tickdata <- data.frame(plots, day_1_ticks, day_2_ticks)
+tickdata
+```
+
+When working with a large data.frame, it's useful to use head() to view the first few lines of data or tail() to view the last few lines of data. 
+
+```{r}
+#view first few lines and last few lines of ginkgo dataset
+head(ginkgo)
+tail(ginkgo)
+```
+It's also useful to check the structure of your data.frame using str().
+The output includes:
+
+- # observations
+- # variables
+- list of variable names
+- data type of variables
+- first observations of variables 
+
+```{r}
+#view structure of ginkgo data frame
+str(ginkgo)
+```
+
+```{r include = FALSE }
+#other notes on functions for examining data, not required for final assignment:
+
+#head() - view first few lines of data frame
+#tail() - view last few lines of data frame
+#str() - structure of dataset - # observations, # variables, list of variable names, data type of variables and first observations. 
+#names() - check column names of a data.frame object. Also works with lists. 
+#class() - check data type of a variable
+#max() - highest number of counts in a given variable
+
+#sum() - to sum all the elements in a vector 
+#nlevels() to pull out the number of groups for a categorical variable.
+```
+
+
+**nrow() - to count the number of observations/rows for a variable**
+
+- can be used with a vector, matrix, or data.frame
+
+```{r}
+#find the number of rows in the ginkgo data.frame
+nrow(ginkgo)
+```
+
+**ncol() - to count the number of columns**
+
+- can be used with a vector, matrix, or data.frame
+
+```{r}
+#find the number of columns in the ginkgo data.frame
+ncol(ginkgo)
+```
+
+**dim() gives the size of the R object - number of rows/columns or number of elements**
+
+```{r}
+#find the dimensions of the ginkgo data.frame
+dim(ginkgo) #gives number of rows and number of columns for the data.frame
+```
+
+## Subsetting
+
+**Subset a column from a data.frame by name with $ **
+
+```{r}
+#select the notch.depth column in the ginkgo data and save as notch_ginkgo
+notch_ginkgo <- ginkgo$notch_depth
+```
+
+
+**Subset by position with [] to select a specific element within a vector, matrix, or data.frame.**
+
+You can specify the element to select by:
+- using a number (ie to select the first element just enter 1)
+- a list of two numbers (to specify row, column where element is located)
+- the name of the element in quotes
+
+Here are some examples:
+```{r}
+#select first row of the ginkgo data
+ginkgo[1, ]
+
+#select the element in row 2, column 3
+ginkgo[2, 3]
+
+#select the 3rd column of the ginkgo data
+ginkgo[ , 3]
+
+#select the first 5 elements of the column notch_depth
+ginkgo[1:5, "notch_depth"]
+
+```
+
+```{r include = FALSE }
+#note: I didn't get this to work so didn't include
+#To select elements that satisfy a certain criteria (such as > 0 or TRUE) for a new variable, use the subsetting [] with the criteria specified within the brackets, as seen in the example below:
+#as.numeric(ginkgo$notch_depth)
+#ginkgo_notch <- ginkgo[ginkgo$notch_depth > 0 ]
+```
+
+
+**subset() selects from a data.frame based on the conditions you specify, such as belonging to a certain level of a factor (such as a species) or having a numerical value greater than 0.**
+
+- the first argument is the name of the dataset
+- the second argument specifies the conditions that must be met for the data to be included
+
+```{r}
+#Extract the measurements for only the Adelie penguins from the penguins dataset
+dat_adelie = subset(penguins, species == "Adelie")
+```
+
+
+## Numerical Data Exploration
+
+**summary() provides summary statistics for the vector. If an entire data.frame is entered, the output includes a summary of every column in the data frame.**
+
+- character vectors = count of observations in each level, number of NA's
+- numerical vectors = min, max, median, mean, 1st/3rd quartile, number of NA's
+- syntax note: use data.frame$vectorname to specify a certain variable
+
+```{r}
+#Summary statistics for ginkgo data.frame
+summary(ginkgo)
+```
+
+
+**mean() calculates the average of a the elements in a given vector**
+
+- use the na.rm argument to eliminate issues with missing data. na.rm = TRUE removes NA values before calculating the mean. 
+
+```{r}
+#calculate the mean notch_depth for the ginkgo dataset
+mean(ginkgo$notch_depth)
+
+#calculate the mean petiole_length for the ginkgo dataset
+mean(ginkgo$petiole_length)
+#answer = NA because we need to tell R to remove NA values before calculating the mean
+
+#try again using the na.rm argument
+mean(ginkgo$petiole_length, na.rm = TRUE)
+```
+
+```{r include = FALSE}
+#Shortcut for calculating mean body masses using aggregate
+aggregate(body_mass_g ~ species + sex, data = penguins, FUN = mean)
+```
+
+
+**sd() calculates the standard deviation of a vector**
+
+```{r}
+#standard deviation of notch_depth from ginkgo data 
+sd(ginkgo$notch_depth)
+```
+
+
+## Graphical Data Exploration
+
+**plot() is used to plot R objects.**
+The default is a simple scatter plot, but you can specify different types of plots using type argument. 
+You can use points() to add additional points and curve() to add a function of a line to the plot if needed.
+
+There are many arguments to enhance the plot and convey all of the important information.
+
+- col = for color of the points or lines. The color can be assigned using a number or the color name in quotes. It can be a vector listed as col = c("red", "blue", "green")[z] to assign multiple colors based on grouping vector z. Use rgb() to add transparency to overlapping points. 
+- pch = for type of point, specified as a number. This can be specified using c() and listing a few types if you are assigning different types of points by group or vector.  
+- cex = for size of the point. Default = 1
+- main = the main title for the plot, in quotes. (use backslash n to add a line break)
+- xlab = x-axis title
+- ylab = y-axis title
+- xlim = limits of x-axis, specify using c(min, max)
+- ylim = limits of y-axis, specify using c(min, max)
+
+
+Example scatterplot using ginkgo data:
+```{r}
+#Scatterplot from ginkgo data
+#x = max leaf depth
+#y = max leaf width
+
+plot(ginkgo$max_depth, ginkgo$max_width,
+     main = "Ginkgo Max Leaf Depth and\nMax Leaf Width",
+     xlab = "Maximum Leaf Depth",
+     ylab = "Maximum Leaf Width",
+     cex = 0.5,
+     pch = 20,
+     col = "steelblue",
+     xlim = c(0, 150),
+     ylim = c(0, 140))
+
+```
+
+
+**hist() creates a histogram, which is a bar chart showing the frequency of observations for each x value**
+
+- breaks = is an argument used to specify the number of breaks or bars in the histogram. This is helpful when the bins R chooses aren't appropriate for your data. 
+Some options to try: 
+  - "breaks = 0:7" instead of "breaks = 7" to force R to use the number of bins desired. 
+  - If 0 and 1 are lumped together in one bin, try subtracting 0.5: "breaks = 0:7 - .5".
+  - use c() to specify the exact break points for the bins (see example below)
+
+Example histogram of penguin flipper lengths:
+```{r}
+#use summary to examine min/max and decide what to do with breaks argument
+summary(penguins$flipper_length_mm)
+
+#create a histogram of penguin flipper lengths with 7 bins
+hist(penguins$flipper_length_mm, 
+     main = "Histogram of Penguin Flipper Lengths", 
+     xlab = "Flipper Length (mm)",
+     breaks = c(170, 180, 190, 200, 210, 220, 230, 240))
+```
+
+
+**boxplot() creates a basic boxplot**
+
+- syntax note: use data.frame$vectorname to specify a certain variable or use formula notation "y ~ x" to specify two variables to compare from a given data frame.
+- The response or y variable must be continuous
+- The predictor variable must be categorical.
+
+A simple boxplot example using the ginkgo data:
+```{r}
+#boxplot of ginkgo petiole lengths
+boxplot(ginkgo$petiole_length,
+        main = "Ginkgo Petiole Length",
+        ylab = "Petiole Length")
+
+```
+
+Conditional boxplots are useful for examining how a second or third variable might be impacting the y variable of interest.
+
+An example conditional boxplot using the ginkgo data for max_depth conditioned on the seeds_present column:
+```{r}
+#boxplot conditioned on continuous variable max_depth conditioned on seeds_present column in ginkgo data frame
+
+boxplot(
+    max_depth ~ seeds_present, data = ginkgo,
+    main = "Max Depth of Ginkgo Leaves by Seed Presence",
+    ylab = "Max Depth",
+    xlab = "Seed Presence")
+
+
+```
+
+
+**par() is useful for specifying parameters for a plot/graph or group of plots/graphs. It's helpful for arranging multiple plots in to a figure with a fixed number of rows/columns.**
+
+- mfrow is a vector c(NumberRows, NumberColumns) and is used to make a figure with a set of plots or graphs arranged in to the specified number of rows/columns. 
+- use par() before a set of code for a given plot
+- use {} brackets to group a set of code
+
+```{r multi_panel_hist, fig.width = 7, fig.height = 7}
+#Use code chunk options to adjust the figure height/width
+
+#Use par() and mfrow = C(2,2) to arrange four different histograms in a 2 by 2 grid
+
+#4 histograms of ginkgo data
+par(mfrow = c(2,2))
+{
+hist(ginkgo$max_width, 
+     main = "Histogram of Max Width", 
+     xlab = "Max Width")
+hist(ginkgo$max_depth, 
+     main = "Histogram of Max Depth", 
+     xlab = "Max Depth")
+hist(ginkgo$notch_depth, 
+     main = "Histogram of Notch Depth", 
+     xlab = "Notch Depth")
+hist(ginkgo$petiole_length, 
+     main = "Histogram of Petiole Length", 
+     xlab = "Petiole Length")
+}
+```
+
+
+## Distribution Functions
+Use these functions to calculate probabilities of events given a certain distribution. They each have different argument options because the different distributions have different parameters. 
+
+**CONTINUOUS DISTRIBUTION - NORMAL DISTRIBUTION**
+
+**dnorm() is the probability density function for a normal distribution. Use to calculate probability of observing a certain value given mean and sd of distribution**
+
+- arguments: dnorm(x, mean = , sd = )
+- x = value
+- standard normal: mean = 0, sd = 1
+
+Example: Are we more likely to observe a value of 0.5 or 2 in a standard normal distribution?
+```{r}
+dnorm(0.5, mean=0, sd = 1) #0.35, 35% probability
+dnorm(2, mean=0, sd = 1) #0.05, 5% probability
+#answer = we are more likely to observe a value of 0.5.
+```
+
+
+**pnorm() is the cumulative density function for a normal distribution. Use for questions related to cumulative probability of a normal distribution (ie probability of finding less than or greater than a certain value)**
+
+- arguments: pnorm(q, mean = , sd = )
+- q = value
+
+Example: What is the probability of observing a value less than 3 in a normal distribution with a mean of 5 and a standard deviation of 2? How about between 3 and 5?
+```{r}
+#less than 3
+pnorm(3, mean = 5, sd = 2)
+#Answer = 0.16, or 16% probability. 
+
+#between 3 and 5
+pnorm(5, mean = 5, sd = 2) - pnorm(3, mean = 5, sd = 2)
+#Answer = 0.34 or 34% probability. 
+```
+Example 2: What is the probability of observing a value of 3 or greater in a normal distribution with a mean of 5 and a standard deviation of 2?
+```{r}
+#use law of total probability to subtract probability of observing value less than 3 from 1
+1- pnorm(3, mean = 5, sd = 2)
+```
+
+
+**qnorm() is the quantile function for the normal distribution. Use to find the quantiles for a standard normal distribution**
+This is useful when we want to find the critical values for a distribution.
+
+- arguments: qnorm(p, mean = , sd = )
+- p = probability
+- note: you don't have to include mean and sd arguments if the distribution is standard normal
+
+Example of critical values for 2.5% and 97.5% quantiles for standard normal:
+```{r}
+qnorm(c(0.025, 0.975))
+```
+**DISCRETE DISTRIBUTION - BINOMIAL DISTRIBUTION**
+
+**dbinom() is the probability mass function for binomial distribution (discrete). Use to calculate probability that an event happens**
+
+- arguments = dbinom(x, size, prob)
+- x = number
+- size = number of trials (n)
+- prob = probability of success for each trial
+
+Example - what is the probability of observing exactly 5 successes in a binomial distribution of n=7 trials and p = 0.88?
+```{r}
+dbinom(5, 7, 0.88)
+#Answer is 0.16, or 15% probability of observing a count of exactly 5 successes in a binomial distribution with these parameters. 
+```
+
+
+**pbinom() is the cumulative mass function for binomial distribution (discrete)**
+
+- arguments = pbinom(q, size, prob)
+- q = number
+- size = number of trials (n)
+- prob = probability of success for each trial
+
+Example - We have a binomial distribution of n=7 trials and p = 0.88. what is the probability of observing a count of 5 or less successes? How about more than 5 successes?
+```{r}
+#Probability of 5 or fewer successes
+pbinom(5, 7, 0.88)
+#Answer = 0.20, or 20% probability.
+
+#Probability of more than 5 successes (use law of total probability and subtract from 1)
+1 - pbinom(5, 7, 0.88)
+#Answer = rounds to 0.80, or 80% probability
+```
+
+
+**qbinom() is the quantile function for binomial distribution (discrete)**
+
+- arguments = qbinom(p, size, prob)
+- p = percentile
+- size = number of trials (n)
+- prob = probability of success for each trial
+
+Example - what is the 95th percentile in our binomial distribution of n=7 trials and p = 0.88?
+```{r}
+qbinom(0.95, 7, 0.88)
+#Answer = 7 
+```
+

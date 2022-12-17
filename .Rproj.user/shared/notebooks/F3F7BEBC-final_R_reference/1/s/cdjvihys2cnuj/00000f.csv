@@ -1,0 +1,8 @@
+"0","#load here package"
+"0","require(here)"
+"2","Loading required package: here
+"
+"2","here() starts at C:/Users/Johanna Ravenhurst/Documents/environmental_data
+"
+"0","#load palmerpenguins package"
+"0","library(palmerpenguins)"

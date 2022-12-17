@@ -1,0 +1,8 @@
+"0","#create 3 vectors for the data.frame ""tickdata"""
+"0","day_1_ticks <- c(3, 4, 67, 87)"
+"0","day_2_ticks <- c(56, 7, 98, 12)"
+"0","plots <- c(""Puffers Pond"", ""The Notch"", ""Mt. Sugarloaf"", ""Puffers Pond"")"
+"0",""
+"0","#create the data.frame ""tickdata"" by combining the three vectors"
+"0","tickdata <- data.frame(plots, day_1_ticks, day_2_ticks)"
+"0","tickdata"

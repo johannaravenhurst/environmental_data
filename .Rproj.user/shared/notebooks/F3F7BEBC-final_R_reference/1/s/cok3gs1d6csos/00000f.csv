@@ -1,0 +1,7 @@
+"0","#boxplot conditioned on continuous variable max_depth conditioned on seeds_present column in ginkgo data frame"
+"0",""
+"0","boxplot("
+"0","    max_depth ~ seeds_present, data = ginkgo,"
+"0","    main = ""Max Depth of Ginkgo Leaves by Seed Presence"","
+"0","    ylab = ""Max Depth"","
+"0","    xlab = ""Seed Presence"")"

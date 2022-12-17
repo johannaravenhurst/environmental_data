@@ -1,0 +1,6 @@
+"0","#use law of total probability to subtract probability of observing value less than 3 from 1"
+"0","1- pnorm(3, mean = 5, sd = 2)"
+"1","[1]"
+"1"," 0.8413447"
+"1","
+"

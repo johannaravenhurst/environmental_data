@@ -1,0 +1,7 @@
+"0","#find the dimensions of the ginkgo data.frame"
+"0","dim(ginkgo) #gives number of rows and number of columns for the data.frame"
+"1","[1]"
+"1"," 756"
+"1","   6"
+"1","
+"

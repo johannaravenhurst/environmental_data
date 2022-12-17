@@ -1,0 +1,5 @@
+"0","#boxplot of ginkgo petiole lengths"
+"0","boxplot(ginkgo$petiole_length,"
+"0","        main = ""Ginkgo Petiole Length"","
+"0","        ylab = ""Petiole Length"")"
+"0",""
